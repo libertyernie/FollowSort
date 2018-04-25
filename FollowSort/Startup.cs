@@ -36,6 +36,7 @@ namespace FollowSort
             services.AddAuthentication().AddTwitter(twitterOptions => {
                 twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
                 twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
+                twitterOptions.SaveTokens = true;
             });
 
             // Add application services.

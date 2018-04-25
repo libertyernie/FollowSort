@@ -17,14 +17,14 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.AspNetCore.Authentication.Twitter
+namespace Microsoft.AspNetCore.Authentication.Tumblr
 {
-    internal class TwitterHandler : RemoteAuthenticationHandler<TwitterOptions>
+    internal class TumblrHandler : RemoteAuthenticationHandler<TumblrOptions>
     {
         private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        private const string RequestTokenEndpoint = "https://api.twitter.com/oauth/request_token";
-        private const string AuthenticationEndpoint = "https://api.twitter.com/oauth/authenticate?oauth_token=";
-        private const string AccessTokenEndpoint = "https://api.twitter.com/oauth/access_token";
+        private const string RequestTokenEndpoint = "https://www.tumblr.com/oauth/request_token";
+        private const string AuthenticationEndpoint = "https://www.tumblr.com/oauth/authorize?oauth_token=";
+        private const string AccessTokenEndpoint = "https://www.tumblr.com/oauth/access_token";
 
         private HttpClient Backchannel => Options.Backchannel;
 
@@ -32,17 +32,17 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
         /// If it is not provided a default instance is supplied which does nothing when the methods are called.
         /// </summary>
-        protected new TwitterEvents Events
+        protected new TumblrEvents Events
         {
-            get { return (TwitterEvents)base.Events; }
+            get { return (TumblrEvents)base.Events; }
             set { base.Events = value; }
         }
 
-        public TwitterHandler(IOptionsMonitor<TwitterOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
+        public TumblrHandler(IOptionsMonitor<TumblrOptions> options, ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
             : base(options, logger, encoder, clock)
         { }
 
-        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new TwitterEvents());
+        protected override Task<object> CreateEventsAsync() => Task.FromResult<object>(new TumblrEvents());
 
         protected override async Task<HandleRequestResult> HandleRemoteAuthenticateAsync()
         {
@@ -84,20 +84,9 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
 
             var accessToken = await ObtainAccessTokenAsync(requestToken, oauthVerifier);
 
-            var identity = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, accessToken.UserId, ClaimValueTypes.String, ClaimsIssuer),
-                new Claim(ClaimTypes.Name, accessToken.ScreenName, ClaimValueTypes.String, ClaimsIssuer),
-                new Claim("urn:twitter:userid", accessToken.UserId, ClaimValueTypes.String, ClaimsIssuer),
-                new Claim("urn:twitter:screenname", accessToken.ScreenName, ClaimValueTypes.String, ClaimsIssuer)
-            },
-            ClaimsIssuer);
+            var identity = new ClaimsIdentity(new Claim[0], ClaimsIssuer);
 
-            JObject user = null;
-            if (Options.RetrieveUserDetails)
-            {
-                user = await RetrieveUserDetailsAsync(accessToken, identity);
-            }
+            JObject user = await RetrieveUserDetailsAsync(accessToken, identity);
 
             if (Options.SaveTokens)
             {
@@ -118,7 +107,7 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
                 action.Run(user, identity, ClaimsIssuer);
             }
 
-            var context = new TwitterCreatingTicketContext(Context, Scheme, Options, new ClaimsPrincipal(identity), properties, token.UserId, token.ScreenName, token.Token, token.TokenSecret, user);
+            var context = new TumblrCreatingTicketContext(Context, Scheme, Options, new ClaimsPrincipal(identity), properties, token.Token, token.TokenSecret, user);
             await Events.CreatingTicket(context);
 
             return new AuthenticationTicket(context.Principal, context.Properties, Scheme.Name);
@@ -139,7 +128,7 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
 
             Response.Cookies.Append(Options.StateCookie.Name, Options.StateDataFormat.Protect(requestToken), cookieOptions);
 
-            var redirectContext = new RedirectContext<TwitterOptions>(Context, Scheme, Options, properties, twitterAuthenticationEndpoint);
+            var redirectContext = new RedirectContext<TumblrOptions>(Context, Scheme, Options, properties, twitterAuthenticationEndpoint);
             await Events.RedirectToAuthorizationEndpoint(redirectContext);
         }
 
@@ -196,7 +185,7 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
             var responseParameters = new FormCollection(new FormReader(responseText).ReadForm());
             if (!string.Equals(responseParameters["oauth_callback_confirmed"], "true", StringComparison.Ordinal))
             {
-                throw new Exception("Twitter oauth_callback_confirmed is not true.");
+                throw new Exception("Tumblr oauth_callback_confirmed is not true.");
             }
 
             return new RequestToken { Token = Uri.UnescapeDataString(responseParameters["oauth_token"]), TokenSecret = Uri.UnescapeDataString(responseParameters["oauth_token_secret"]), CallbackConfirmed = true, Properties = properties };
@@ -204,8 +193,6 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
 
         private async Task<AccessToken> ObtainAccessTokenAsync(RequestToken token, string verifier)
         {
-            // https://dev.twitter.com/docs/api/1/post/oauth/access_token
-
             Logger.ObtainAccessToken();
 
             var nonce = Guid.NewGuid().ToString("N");
@@ -273,15 +260,12 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
             return new AccessToken
             {
                 Token = Uri.UnescapeDataString(responseParameters["oauth_token"]),
-                TokenSecret = Uri.UnescapeDataString(responseParameters["oauth_token_secret"]),
-                UserId = Uri.UnescapeDataString(responseParameters["user_id"]),
-                ScreenName = Uri.UnescapeDataString(responseParameters["screen_name"])
+                TokenSecret = Uri.UnescapeDataString(responseParameters["oauth_token_secret"])
             };
         }
 
         // https://dev.twitter.com/rest/reference/get/account/verify_credentials
-        private async Task<JObject> RetrieveUserDetailsAsync(AccessToken accessToken, ClaimsIdentity identity)
-        {
+        private async Task<JObject> RetrieveUserDetailsAsync(AccessToken accessToken, ClaimsIdentity identity) {
             Logger.RetrieveUserDetails();
 
             var nonce = Guid.NewGuid().ToString("N");
@@ -297,15 +281,14 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
                         };
 
             var parameterBuilder = new StringBuilder();
-            foreach (var authorizationKey in authorizationParts)
-            {
+            foreach (var authorizationKey in authorizationParts) {
                 parameterBuilder.AppendFormat("{0}={1}&", UrlEncoder.Encode(authorizationKey.Key), UrlEncoder.Encode(authorizationKey.Value));
             }
             parameterBuilder.Length--;
             var parameterString = parameterBuilder.ToString();
 
-            var resource_url = "https://api.twitter.com/1.1/account/verify_credentials.json";
-            var resource_query = "include_email=true";
+            var resource_url = "https://api.tumblr.com/v2/user/info";
+            var resource_query = "foo=bar";
             var canonicalizedRequestBuilder = new StringBuilder();
             canonicalizedRequestBuilder.Append(HttpMethod.Get.Method);
             canonicalizedRequestBuilder.Append("&");
@@ -320,25 +303,23 @@ namespace Microsoft.AspNetCore.Authentication.Twitter
 
             var authorizationHeaderBuilder = new StringBuilder();
             authorizationHeaderBuilder.Append("OAuth ");
-            foreach (var authorizationPart in authorizationParts)
-            {
+            foreach (var authorizationPart in authorizationParts) {
                 authorizationHeaderBuilder.AppendFormat(
                     "{0}=\"{1}\", ", authorizationPart.Key, UrlEncoder.Encode(authorizationPart.Value));
             }
             authorizationHeaderBuilder.Length = authorizationHeaderBuilder.Length - 2;
 
-            var request = new HttpRequestMessage(HttpMethod.Get, resource_url + "?include_email=true");
+            var request = new HttpRequestMessage(HttpMethod.Get, resource_url + "?foo=bar");
             request.Headers.Add("Authorization", authorizationHeaderBuilder.ToString());
 
             var response = await Backchannel.SendAsync(request, Context.RequestAborted);
-            if (!response.IsSuccessStatusCode)
-            {
+            if (!response.IsSuccessStatusCode) {
                 Logger.LogError("Email request failed with a status code of " + response.StatusCode);
                 response.EnsureSuccessStatusCode(); // throw
             }
             var responseText = await response.Content.ReadAsStringAsync();
 
-            var result = JObject.Parse(responseText);
+            var result = JObject.Parse(responseText)["response"]["user"] as JObject;
 
             return result;
         }

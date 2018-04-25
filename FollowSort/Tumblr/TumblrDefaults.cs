@@ -3,8 +3,10 @@
 
 namespace Microsoft.AspNetCore.Authentication.Tumblr
 {
-    /// <summary>
-    /// The Tumblr access token retrieved from the access token endpoint.
-    /// </summary>
-    public class AccessToken : RequestToken { }
+    public static class TumblrDefaults
+    {
+        public const string AuthenticationScheme = "Tumblr";
+
+        public static readonly string DisplayName = "Tumblr";
+    }
 }

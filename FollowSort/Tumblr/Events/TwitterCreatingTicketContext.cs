@@ -6,65 +6,51 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.AspNetCore.Authentication.Twitter
+namespace Microsoft.AspNetCore.Authentication.Tumblr
 {
     /// <summary>
     /// Contains information about the login session as well as the user <see cref="System.Security.Claims.ClaimsIdentity"/>.
     /// </summary>
-    public class TwitterCreatingTicketContext : ResultContext<TwitterOptions>
+    public class TumblrCreatingTicketContext : ResultContext<TumblrOptions>
     {
         /// <summary>
-        /// Initializes a <see cref="TwitterCreatingTicketContext"/>
+        /// Initializes a <see cref="TumblrCreatingTicketContext"/>
         /// </summary>
         /// <param name="context">The HTTP environment</param>
         /// <param name="scheme">The scheme data</param>
-        /// <param name="options">The options for Twitter</param>
+        /// <param name="options">The options for Tumblr</param>
         /// <param name="principal">The <see cref="ClaimsPrincipal"/>.</param>
         /// <param name="properties">The <see cref="AuthenticationProperties"/>.</param>
-        /// <param name="userId">Twitter user ID</param>
-        /// <param name="screenName">Twitter screen name</param>
-        /// <param name="accessToken">Twitter access token</param>
-        /// <param name="accessTokenSecret">Twitter access token secret</param>
+        /// <param name="userId">Tumblr user ID</param>
+        /// <param name="screenName">Tumblr screen name</param>
+        /// <param name="accessToken">Tumblr access token</param>
+        /// <param name="accessTokenSecret">Tumblr access token secret</param>
         /// <param name="user">User details</param>
-        public TwitterCreatingTicketContext(
+        public TumblrCreatingTicketContext(
             HttpContext context,
             AuthenticationScheme scheme,
-            TwitterOptions options,
+            TumblrOptions options,
             ClaimsPrincipal principal,
             AuthenticationProperties properties,
-            string userId,
-            string screenName,
             string accessToken,
             string accessTokenSecret,
             JObject user)
             : base(context, scheme, options)
         {
-            UserId = userId;
-            ScreenName = screenName;
             AccessToken = accessToken;
             AccessTokenSecret = accessTokenSecret;
             User = user ?? new JObject();
             Principal = principal;
             Properties = properties;
         }
-
+        
         /// <summary>
-        /// Gets the Twitter user ID
-        /// </summary>
-        public string UserId { get; }
-
-        /// <summary>
-        /// Gets the Twitter screen name
-        /// </summary>
-        public string ScreenName { get; }
-
-        /// <summary>
-        /// Gets the Twitter access token
+        /// Gets the Tumblr access token
         /// </summary>
         public string AccessToken { get; }
 
         /// <summary>
-        /// Gets the Twitter access token secret
+        /// Gets the Tumblr access token secret
         /// </summary>
         public string AccessTokenSecret { get; }
 

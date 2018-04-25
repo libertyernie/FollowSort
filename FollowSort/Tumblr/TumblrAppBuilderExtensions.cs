@@ -2,14 +2,14 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.AspNetCore.Authentication.Twitter;
+using Microsoft.AspNetCore.Authentication.Tumblr;
 
 namespace Microsoft.AspNetCore.Builder
 {
     /// <summary>
-    /// Extension methods to add Twitter authentication capabilities to an HTTP application pipeline.
+    /// Extension methods to add Tumblr authentication capabilities to an HTTP application pipeline.
     /// </summary>
-    public static class TwitterAppBuilderExtensions
+    public static class TumblrAppBuilderExtensions
     {
         /// <summary>
         /// Obsolete, see https://go.microsoft.com/fwlink/?linkid=845470
@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.Builder
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add the handler to.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         [Obsolete("See https://go.microsoft.com/fwlink/?linkid=845470", error: true)]
-        public static IApplicationBuilder UseTwitterAuthentication(this IApplicationBuilder app)
+        public static IApplicationBuilder UseTumblrAuthentication(this IApplicationBuilder app)
         {
             throw new NotSupportedException("This method is no longer supported, see https://go.microsoft.com/fwlink/?linkid=845470");
         }
@@ -26,10 +26,10 @@ namespace Microsoft.AspNetCore.Builder
         /// Obsolete, see https://go.microsoft.com/fwlink/?linkid=845470
         /// </summary>
         /// <param name="app">The <see cref="IApplicationBuilder"/> to add the handler to.</param>
-        /// <param name="options">An action delegate to configure the provided <see cref="TwitterOptions"/>.</param>
+        /// <param name="options">An action delegate to configure the provided <see cref="TumblrOptions"/>.</param>
         /// <returns>A reference to this instance after the operation has completed.</returns>
         [Obsolete("See https://go.microsoft.com/fwlink/?linkid=845470", error: true)]
-        public static IApplicationBuilder UseTwitterAuthentication(this IApplicationBuilder app, TwitterOptions options)
+        public static IApplicationBuilder UseTumblrAuthentication(this IApplicationBuilder app, TumblrOptions options)
         {
             throw new NotSupportedException("This method is no longer supported, see https://go.microsoft.com/fwlink/?linkid=845470");
         }

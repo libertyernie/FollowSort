@@ -58,9 +58,7 @@ namespace FollowSort.Controllers
             var model = new IndexViewModel
             {
                 Username = user.UserName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                IsEmailConfirmed = user.EmailConfirmed,
+                DisplayName = user.DisplayName,
                 StatusMessage = StatusMessage
             };
 
@@ -82,23 +80,28 @@ namespace FollowSort.Controllers
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            var email = user.Email;
-            if (model.Email != email)
+            var username = user.UserName;
+            if (model.Username != username)
             {
-                var setEmailResult = await _userManager.SetEmailAsync(user, model.Email);
+                var setEmailResult = await _userManager.SetUserNameAsync(user, model.Username);
                 if (!setEmailResult.Succeeded)
                 {
-                    throw new ApplicationException($"Unexpected error occurred setting email for user with ID '{user.Id}'.");
+                    if (setEmailResult.Errors.All(e => e.Code == "DuplicateUserName"))
+                    {
+                        StatusMessage = $"The username {model.Username} is already taken.";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    throw new ApplicationException($"Unexpected error occurred setting username for user with ID '{user.Id}'.");
                 }
             }
-
-            var phoneNumber = user.PhoneNumber;
-            if (model.PhoneNumber != phoneNumber)
+            
+            if (model.DisplayName != user.DisplayName)
             {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, model.PhoneNumber);
-                if (!setPhoneResult.Succeeded)
+                user.DisplayName = model.DisplayName;
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
                 {
-                    throw new ApplicationException($"Unexpected error occurred setting phone number for user with ID '{user.Id}'.");
+                    throw new ApplicationException($"Unexpected error occurred setting display name for user with ID '{user.Id}'.");
                 }
             }
 
@@ -257,7 +260,7 @@ namespace FollowSort.Controllers
                     await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
                     var otherUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                    StatusMessage = $"Your {info.ProviderDisplayName} account is already connected to the {nameof(FollowSort)} account {otherUser.DisplayName}. You need to log in as that user and remove the account from its list of external logins.";
+                    StatusMessage = $"Your {info.ProviderDisplayName} account is already connected to a {nameof(FollowSort)} account. To attach it to this FollowSort account, you'll first need to detach it from the other account.";
                     return RedirectToAction(nameof(ExternalLogins));
                 }
 

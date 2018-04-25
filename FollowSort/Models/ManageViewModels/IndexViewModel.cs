@@ -8,17 +8,21 @@ namespace FollowSort.Models.ManageViewModels
 {
     public class IndexViewModel
     {
+        [Display(Name = "Username (when logging in with password)")]
         public string Username { get; set; }
 
-        public bool IsEmailConfirmed { get; set; }
+        //public bool IsEmailConfirmed { get; set; }
 
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
+        //[Required]
+        //[EmailAddress]
+        //public string Email { get; set; }
 
-        [Phone]
-        [Display(Name = "Phone number")]
-        public string PhoneNumber { get; set; }
+        //[Phone]
+        //[Display(Name = "Phone number")]
+        //public string PhoneNumber { get; set; }
+
+        [Display(Name = "Display name")]
+        public string DisplayName { get; set; }
 
         public string StatusMessage { get; set; }
     }

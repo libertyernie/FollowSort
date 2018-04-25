@@ -1,0 +1,23 @@
+﻿@using FollowSort.Data
+@model IList<Notification>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h2>Notifications (@Model.Count)</h2>
+
+@foreach (var n in Model)
+{
+    <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
+        <input type="checkbox" name="chk@(n.Id)" style="flex: 0 0 32px" />
+        <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
+            <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
+            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                @n.Name
+            </div>
+            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                @n.ArtistName
+            </div>
+        </a>
+    </div>
+}

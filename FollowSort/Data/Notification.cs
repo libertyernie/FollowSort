@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FollowSort.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -10,6 +11,8 @@ namespace FollowSort.Data
     public class Notification
     {
         public Guid Id { get; set; }
+
+        public string UserId { get; set; }
 
         public SourceSite SourceSite { get; set; }
 
@@ -28,5 +31,8 @@ namespace FollowSort.Data
         public string Name { get; set; }
 
         public DateTimeOffset PostDate { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        public ApplicationUser ApplicationUser { get; set; }
     }
 }

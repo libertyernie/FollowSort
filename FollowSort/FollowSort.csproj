@@ -7,6 +7,7 @@
 
 
   <ItemGroup>
+    <PackageReference Include="AspNet.Security.OAuth.DeviantArt" Version="2.0.0-rc2-final" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="2.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.0.2" PrivateAssets="All" />

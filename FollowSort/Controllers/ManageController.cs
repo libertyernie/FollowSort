@@ -279,6 +279,8 @@ namespace FollowSort.Controllers
                 throw new ApplicationException($"Unexpected error occurred adding external login for user with ID '{user.Id}'.");
             }
 
+            await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+            
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 

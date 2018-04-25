@@ -33,10 +33,14 @@ namespace FollowSort
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddAuthentication().AddTwitter(twitterOptions => {
-                twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
-                twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
-                twitterOptions.SaveTokens = true;
+            services.AddAuthentication().AddTwitter(o => {
+                o.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
+                o.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
+                o.SaveTokens = true;
+            }).AddDeviantArt(o => {
+                o.ClientId = Configuration["Authentication:DeviantArt:ClientId"];
+                o.ClientSecret = Configuration["Authentication:DeviantArt:ClientSecret"];
+                o.SaveTokens = true;
             });
 
             // Add application services.

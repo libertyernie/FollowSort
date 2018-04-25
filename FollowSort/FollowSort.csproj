@@ -5,6 +5,11 @@
     <UserSecretsId>aspnet-FollowSort-5E69C189-D284-4D16-BE65-3D1406A06218</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Data\Migrations\20180425194449_ArtistAndNotification.cs" />
+    <Compile Remove="Data\Migrations\20180425194449_ArtistAndNotification.Designer.cs" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.DeviantArt" Version="2.0.0-rc2-final" />

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FollowSort.Models;
+using FollowSort.Data;
 
 namespace FollowSort.Data
 {
@@ -22,5 +23,8 @@ namespace FollowSort.Data
             // For example, you can rename the ASP.NET Identity table names and more.
             // Add your customizations after calling base.OnModelCreating(builder);
         }
+
+        public DbSet<Artist> Artists { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

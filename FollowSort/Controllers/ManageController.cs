@@ -105,31 +105,7 @@ namespace FollowSort.Controllers
             StatusMessage = "Your profile has been updated";
             return RedirectToAction(nameof(Index));
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendVerificationEmail(IndexViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
-            }
-
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var callbackUrl = Url.EmailConfirmationLink(user.Id, code, Request.Scheme);
-            var email = user.Email;
-            await _emailSender.SendEmailConfirmationAsync(email, callbackUrl);
-
-            StatusMessage = "Verification email sent. Please check your email.";
-            return RedirectToAction(nameof(Index));
-        }
-
+        
         [HttpGet]
         public async Task<IActionResult> ChangePassword()
         {
@@ -276,6 +252,15 @@ namespace FollowSort.Controllers
             var result = await _userManager.AddLoginAsync(user, info);
             if (!result.Succeeded)
             {
+                if (result.Errors.All(e => e.Code == "LoginAlreadyAssociated"))
+                {
+                    await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+
+                    var otherUser = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+                    StatusMessage = $"Your {info.ProviderDisplayName} account is already connected to the {nameof(FollowSort)} account {otherUser.DisplayName}. You need to log in as that user and remove the account from its list of external logins.";
+                    return RedirectToAction(nameof(ExternalLogins));
+                }
+
                 throw new ApplicationException($"Unexpected error occurred adding external login for user with ID '{user.Id}'.");
             }
 

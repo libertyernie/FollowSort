@@ -289,44 +289,22 @@ namespace FollowSort.Controllers
             }
             else
             {
-                // If the user does not have an account, then ask the user to create an account.
-                ViewData["ReturnUrl"] = returnUrl;
-                ViewData["LoginProvider"] = info.LoginProvider;
-                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                return View("ExternalLogin", new ExternalLoginViewModel { Email = email });
+                var loginProvider = info.LoginProvider.ToLowerInvariant();
+                var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+                var id = info.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = new ApplicationUser {
+                    DisplayName = name,
+                    UserName = $"{id}@{loginProvider}",
+                    Email = $"{id}@{loginProvider}"
+                };
+                var r = await _userManager.CreateAsync(user);
+                if (!r.Succeeded) throw new Exception(string.Join(", ", r.Errors.Select(e => e.Description)));
+                r = await _userManager.AddLoginAsync(user, info);
+                if (!r.Succeeded) throw new Exception(string.Join(", ", r.Errors.Select(e => e.Description)));
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                return RedirectToLocal(returnUrl);
             }
-        }
-
-        [HttpPost]
-        [AllowAnonymous]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ExternalLoginConfirmation(ExternalLoginViewModel model, string returnUrl = null)
-        {
-            if (ModelState.IsValid)
-            {
-                // Get the information about the user from the external login provider
-                var info = await _signInManager.GetExternalLoginInfoAsync();
-                if (info == null)
-                {
-                    throw new ApplicationException("Error loading external login information during confirmation.");
-                }
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                var result = await _userManager.CreateAsync(user);
-                if (result.Succeeded)
-                {
-                    result = await _userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-                        return RedirectToLocal(returnUrl);
-                    }
-                }
-                AddErrors(result);
-            }
-
-            ViewData["ReturnUrl"] = returnUrl;
-            return View(nameof(ExternalLogin), model);
         }
 
         [HttpGet]

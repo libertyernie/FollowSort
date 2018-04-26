@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using FollowSort.Data;
 using FollowSort.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,12 +40,26 @@ namespace FollowSort.Controllers
             return View(await q.ToListAsync());
         }
 
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Remove(IFormCollection data)
+        {
+            foreach (var s in data?.Keys ?? new string[0])
+            {
+                if (s.StartsWith("chk") && Guid.TryParse(s.Substring(3), out Guid g))
+                {
+                    _context.RemoveRange(_context.Notifications.Where(n => n.Id == g));
+                }
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
         public async Task<IActionResult> Refresh()
         {
             string userId = _userManager.GetUserId(User);
             var artists = await _context.Artists.Where(a => a.UserId == userId).ToListAsync();
             await Task.WhenAll(RefreshTwitter(artists));
-            return NoContent();
+            return RedirectToAction(nameof(Index));
         }
 
         private async Task RefreshTwitter(IEnumerable<Artist> artists)

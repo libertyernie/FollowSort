@@ -2,78 +2,140 @@
 @model IList<Notification>
 @{
     ViewData["Title"] = "Index";
+
 }
+
+<style type="text/css">
+    label.select-all {
+        user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+</style>
+
+<script type="text/javascript">
+    window.addEventListener("load", function () {
+        $("label.select-all input[type=checkbox]").change(function (e) {
+            var checkbox = e.target;
+            var parent = checkbox;
+            while (!parent.classList.contains("notification-section") && parent.parentElement) {
+                parent = parent.parentElement;
+            }
+            $("input.individual[type=checkbox]", parent).each(function (i, e) {
+                e.checked = checkbox.checked;
+            });
+        });
+    });
+</script>
 
 <h2>Notifications (@Model.Count)</h2>
 
-<h3>Original Photos</h3>
+<form action="/Notifications/Remove" method="post">
+    @Html.AntiForgeryToken()
+    <button style="float: right" type="submit" class="btn btn-danger">Remove selected</button>
+    <label class="select-all">
+        <input type="checkbox" />
+        Select all notifications
+    </label>
 
-@foreach (var n in Model.Where(n => !n.TextPost && !n.Repost))
-{
-    <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
-        <input type="checkbox" name="chk@(n.Id)" style="flex: 0 0 32px" />
-        <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
-            <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
-            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
-                @n.Name
-            </div>
-            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
-                @n.ArtistName
-            </div>
-        </a>
-    </div>
-}
+    <h3>Original Photos</h3>
 
-<h3>Reposted Photos</h3>
-
-@foreach (var n in Model.Where(n => !n.TextPost && n.Repost))
-{
-    <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
-        <input type="checkbox" name="chk@(n.Id)" style="flex: 0 0 32px" />
-        <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
-            @if (n.RepostedByArtistName != null)
-            {
-                <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
-                    Reposted by @n.RepostedByArtistName
-                </div>
-            }
-            <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
-            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
-                @n.Name
-            </div>
-            <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
-                @n.ArtistName
-            </div>
-        </a>
-    </div>
-}
-
-<h3>Other Posts</h3>
-
-@foreach (var n in Model.Where(n => n.TextPost && !n.Repost))
-{
-    <div>
-        <input type="checkbox" name="chk@(n.Id)" />
-        @n.ArtistName:
-        <a href="@n.Url">
-            @n.Name
-        </a>
-    </div>
-}
-
-<h3>Other Reposts</h3>
-
-@foreach (var n in Model.Where(n => n.TextPost && n.Repost))
-{
-    <div>
-        <input type="checkbox" name="chk@(n.Id)" />
-        @n.ArtistName:
-        <a href="@n.Url">
-            @n.Name
-        </a>
-        @if (n.RepostedByArtistName != null)
+    <div class="notification-section">
+        <label class="select-all">
+            <input type="checkbox" />
+            Select all
+        </label>
+        <br />
+        @foreach (var n in Model.Where(n => !n.TextPost && !n.Repost))
         {
-            @:(reposted by @n.RepostedByArtistName)
+            <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
+                <input type="checkbox" class="individual" name="chk@(n.Id)" style="flex: 0 0 32px" />
+                <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
+                    <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
+                    <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                        @n.Name
+                    </div>
+                    <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                        @n.ArtistName
+                    </div>
+                </a>
+            </div>
         }
     </div>
-}
+
+    <h3>Reposted Photos</h3>
+
+    <div class="notification-section">
+        <label class="select-all">
+            <input type="checkbox" />
+            Select all
+        </label>
+        <br />
+        @foreach (var n in Model.Where(n => !n.TextPost && n.Repost))
+        {
+            <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
+                <input type="checkbox" class="individual" name="chk@(n.Id)" style="flex: 0 0 32px" />
+                <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
+                    @if (n.RepostedByArtistName != null)
+                    {
+                        <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                            Reposted by @n.RepostedByArtistName
+                        </div>
+                    }
+                    <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
+                    <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                        @n.Name
+                    </div>
+                    <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                        @n.ArtistName
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <h3>Other Posts</h3>
+
+    <div class="notification-section">
+        <label class="select-all">
+            <input type="checkbox" />
+            Select all
+        </label>
+        <br />
+        @foreach (var n in Model.Where(n => n.TextPost && !n.Repost))
+        {
+            <div>
+                <input type="checkbox" class="individual" name="chk@(n.Id)" />
+                @n.ArtistName:
+                <a href="@n.Url">
+                    @n.Name
+                </a>
+            </div>
+        }
+    </div>
+
+    <h3>Other Reposts</h3>
+
+    <div class="notification-section">
+        <label class="select-all">
+            <input type="checkbox" />
+            Select all
+        </label>
+        <br />
+        @foreach (var n in Model.Where(n => n.TextPost && n.Repost))
+        {
+            <div>
+                <input type="checkbox" class="individual" name="chk@(n.Id)" />
+                @n.ArtistName:
+                <a href="@n.Url">
+                    @n.Name
+                </a>
+                @if (n.RepostedByArtistName != null)
+                {
+                    @:(reposted by @n.RepostedByArtistName)
+                }
+            </div>
+        }
+    </div>
+</form>

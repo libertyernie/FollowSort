@@ -25,6 +25,8 @@ namespace FollowSort.Data
 
         public DateTimeOffset LastChecked { get; set; }
 
+        public string LastCheckedSourceSiteId { get; set; }
+
         [ForeignKey(nameof(UserId))]
         public ApplicationUser User;
     }

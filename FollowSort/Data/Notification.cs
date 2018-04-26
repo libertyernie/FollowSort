@@ -16,6 +16,8 @@ namespace FollowSort.Data
 
         public SourceSite SourceSite { get; set; }
 
+        public string SourceSiteId { get; set; }
+
         [Required]
         public string ArtistName { get; set; }
 

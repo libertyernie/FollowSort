@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FollowSort.Data;
 using FollowSort.Models;
 using FollowSort.Services;
+using Tweetinvi.Models;
 
 namespace FollowSort
 {
@@ -49,6 +50,12 @@ namespace FollowSort
 
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
+
+            services.AddSingleton(typeof(IConsumerCredentials), new ConsumerCredentials(
+                Configuration["Authentication:Twitter:ConsumerKey"],
+                Configuration["Authentication:Twitter:ConsumerSecret"]));
+
+            Tweetinvi.ExceptionHandler.SwallowWebExceptions = false;
 
             services.AddMvc()
                 .AddSessionStateTempDataProvider();

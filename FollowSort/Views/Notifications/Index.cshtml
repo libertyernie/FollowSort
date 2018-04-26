@@ -8,7 +8,7 @@
 
 <h3>Original Photos</h3>
 
-@foreach (var n in Model.Where(n => !n.Repost))
+@foreach (var n in Model.Where(n => !n.TextPost && !n.Repost))
 {
     <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
         <input type="checkbox" name="chk@(n.Id)" style="flex: 0 0 32px" />
@@ -26,11 +26,17 @@
 
 <h3>Reposted Photos</h3>
 
-@foreach (var n in Model.Where(n => n.Repost))
+@foreach (var n in Model.Where(n => !n.TextPost && n.Repost))
 {
     <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
         <input type="checkbox" name="chk@(n.Id)" style="flex: 0 0 32px" />
         <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
+            @if (n.RepostedByArtistName != null)
+            {
+                <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
+                    Reposted by @n.RepostedByArtistName
+                </div>
+            }
             <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
             <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
                 @n.Name
@@ -39,5 +45,35 @@
                 @n.ArtistName
             </div>
         </a>
+    </div>
+}
+
+<h3>Other Posts</h3>
+
+@foreach (var n in Model.Where(n => n.TextPost && !n.Repost))
+{
+    <div>
+        <input type="checkbox" name="chk@(n.Id)" />
+        @n.ArtistName:
+        <a href="@n.Url">
+            @n.Name
+        </a>
+    </div>
+}
+
+<h3>Other Reposts</h3>
+
+@foreach (var n in Model.Where(n => n.TextPost && n.Repost))
+{
+    <div>
+        <input type="checkbox" name="chk@(n.Id)" />
+        @n.ArtistName:
+        <a href="@n.Url">
+            @n.Name
+        </a>
+        @if (n.RepostedByArtistName != null)
+        {
+            @:(reposted by @n.RepostedByArtistName)
+        }
     </div>
 }

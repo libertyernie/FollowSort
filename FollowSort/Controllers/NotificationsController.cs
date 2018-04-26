@@ -65,13 +65,13 @@ namespace FollowSort.Controllers
                     {
                         SinceId = long.TryParse(a.LastCheckedSourceSiteId, out long l) ? l : 20,
                         IncludeEntities = true,
-                        IncludeRTS = a.IncludeReposts,
-                        MaximumNumberOfTweetsToRetrieve = 10
+                        MaximumNumberOfTweetsToRetrieve = a.LastCheckedSourceSiteId == null ? 20 : 200
                     });
 
                     if (tweets == null)
                     {
-                        throw new Exception(ExceptionHandler.GetLastException().TwitterDescription, ExceptionHandler.GetLastException().WebException);
+                        var ex = ExceptionHandler.GetLastException();
+                        throw new Exception(ex.TwitterDescription, ex as Exception);
                     }
 
                     foreach (var t in tweets)
@@ -86,12 +86,13 @@ namespace FollowSort.Controllers
                                     UserId = a.UserId,
                                     SourceSite = a.SourceSite,
                                     SourceSiteId = t.IdStr,
-                                    ArtistName = a.Name,
+                                    ArtistName = (t.RetweetedTweet?.CreatedBy ?? t.CreatedBy).ScreenName,
+                                    RepostedByArtistName = t.CreatedBy.ScreenName,
                                     Url = t.Url,
                                     TextPost = false,
                                     Repost = t.IsRetweet,
                                     ThumbnailUrl = p.MediaURLHttps,
-                                    Name = t.Text,
+                                    Name = t.RetweetedTweet?.Text ?? t.Text,
                                     PostDate = t.CreatedAt
                                 });
                             }
@@ -102,12 +103,13 @@ namespace FollowSort.Controllers
                                 UserId = a.UserId,
                                 SourceSite = a.SourceSite,
                                 SourceSiteId = t.IdStr,
-                                ArtistName = a.Name,
+                                ArtistName = (t.RetweetedTweet?.CreatedBy ?? t.CreatedBy).ScreenName,
+                                RepostedByArtistName = t.CreatedBy.ScreenName,
                                 Url = t.Url,
                                 TextPost = true,
                                 Repost = t.IsRetweet,
                                 ThumbnailUrl = null,
-                                Name = t.Text,
+                                Name = t.RetweetedTweet?.Text ?? t.Text,
                                 PostDate = t.CreatedAt
                             });
                         }

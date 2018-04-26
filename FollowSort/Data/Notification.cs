@@ -20,6 +20,8 @@ namespace FollowSort.Data
 
         [Required]
         public string ArtistName { get; set; }
+        
+        public string RepostedByArtistName { get; set; }
 
         [Required]
         public string Url { get; set; }

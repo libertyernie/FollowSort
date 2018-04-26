@@ -12,6 +12,7 @@ using FollowSort.Data;
 using FollowSort.Models;
 using FollowSort.Services;
 using Tweetinvi.Models;
+using Tweetinvi;
 
 namespace FollowSort
 {
@@ -55,7 +56,7 @@ namespace FollowSort
                 Configuration["Authentication:Twitter:ConsumerKey"],
                 Configuration["Authentication:Twitter:ConsumerSecret"]));
 
-            Tweetinvi.ExceptionHandler.SwallowWebExceptions = false;
+            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
 
             services.AddMvc()
                 .AddSessionStateTempDataProvider();

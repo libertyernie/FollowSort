@@ -8,9 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using FollowSort.Data;
 using Microsoft.AspNetCore.Identity;
 using FollowSort.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FollowSort.Controllers
 {
+    [Authorize]
     public class ArtistsController : Controller
     {
         private readonly ApplicationDbContext _context;

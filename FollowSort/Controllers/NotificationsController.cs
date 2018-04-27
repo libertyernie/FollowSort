@@ -67,6 +67,7 @@ namespace FollowSort.Controllers
             string userId = _userManager.GetUserId(User);
             var artists = await _context.Artists.Where(a => a.UserId == userId).ToListAsync();
             await Task.WhenAll(RefreshTwitter(artists), RefreshTumblr(artists));
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -100,6 +101,11 @@ namespace FollowSort.Controllers
                 foreach (var t in tweets)
                 {
                     var photos = t.Entities.Medias.Where(m => m.MediaType == "photo");
+
+                    if (photos.Any() && t.IsRetweet && !a.IncludeRepostedPhotos) continue;
+                    if (!photos.Any() && !t.IsRetweet && !a.IncludeNonPhotos) continue;
+                    if (!photos.Any() && t.IsRetweet && !a.IncludeRepostedNonPhotos) continue;
+
                     if (photos.Any())
                     {
                         foreach (var p in photos)
@@ -119,7 +125,8 @@ namespace FollowSort.Controllers
                                 PostDate = t.CreatedAt
                             });
                         }
-                    } else
+                    }
+                    else
                     {
                         _context.Notifications.Add(new Notification
                         {
@@ -143,7 +150,6 @@ namespace FollowSort.Controllers
                 {
                     a.LastCheckedSourceSiteId = tweets.Select(t => t.Id).Max().ToString();
                 }
-                await _context.SaveChangesAsync();
             }
         }
 
@@ -193,6 +199,12 @@ namespace FollowSort.Controllers
                                     ?? (p as VideoPost)?.Caption
                                     ?? p.Url;
                         string artistName = p.RebloggedRootName ?? p.RebloggedFromName ?? p.BlogName;
+                        bool repost = artistName != p.BlogName;
+
+                        if (p is PhotoPost && repost && !a.IncludeRepostedPhotos) continue;
+                        if (!(p is PhotoPost) && !repost && !a.IncludeNonPhotos) continue;
+                        if (!(p is PhotoPost) && repost && !a.IncludeRepostedNonPhotos) continue;
+
                         if (p is PhotoPost pp)
                         {
                             foreach (var photo in pp.PhotoSet)
@@ -206,7 +218,7 @@ namespace FollowSort.Controllers
                                     RepostedByArtistName = p.BlogName,
                                     Url = p.Url,
                                     TextPost = false,
-                                    Repost = artistName != p.BlogName,
+                                    Repost = repost,
                                     ThumbnailUrl = photo.OriginalSize.ImageUrl,
                                     Name = pp.Caption ?? title,
                                     PostDate = p.Timestamp
@@ -224,7 +236,7 @@ namespace FollowSort.Controllers
                                 RepostedByArtistName = p.BlogName,
                                 Url = p.Url,
                                 TextPost = true,
-                                Repost = artistName != p.BlogName,
+                                Repost = repost,
                                 ThumbnailUrl = null,
                                 Name = title,
                                 PostDate = p.Timestamp
@@ -237,7 +249,6 @@ namespace FollowSort.Controllers
                     {
                         a.LastCheckedSourceSiteId = posts.Select(t => t.Id).Max().ToString();
                     }
-                    await _context.SaveChangesAsync();
                 }
             }
         }

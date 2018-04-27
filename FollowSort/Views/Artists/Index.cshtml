@@ -19,10 +19,13 @@
                     @Html.DisplayNameFor(model => model.Name)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.IncludeTextPosts)
+                    @Html.DisplayNameFor(model => model.IncludeRepostedPhotos)
                 </th>
                 <th>
-                    @Html.DisplayNameFor(model => model.IncludeReposts)
+                    @Html.DisplayNameFor(model => model.IncludeNonPhotos)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.IncludeRepostedNonPhotos)
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.LastChecked)
@@ -40,10 +43,13 @@
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.IncludeTextPosts)
+                @Html.DisplayFor(modelItem => item.IncludeRepostedPhotos)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.IncludeReposts)
+                @Html.DisplayFor(modelItem => item.IncludeNonPhotos)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IncludeRepostedNonPhotos)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.LastChecked)

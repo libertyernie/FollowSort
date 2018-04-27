@@ -16,14 +16,21 @@
             <div class="form-group">
                 <div class="checkbox">
                     <label>
-                        <input asp-for="IncludeTextPosts" /> @Html.DisplayNameFor(model => model.IncludeTextPosts)
+                        <input asp-for="IncludeRepostedPhotos" /> @Html.DisplayNameFor(model => model.IncludeRepostedPhotos)
                     </label>
                 </div>
             </div>
             <div class="form-group">
                 <div class="checkbox">
                     <label>
-                        <input asp-for="IncludeReposts" /> @Html.DisplayNameFor(model => model.IncludeReposts)
+                        <input asp-for="IncludeNonPhotos" /> @Html.DisplayNameFor(model => model.IncludeNonPhotos)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="IncludeRepostedNonPhotos" /> @Html.DisplayNameFor(model => model.IncludeRepostedNonPhotos)
                     </label>
                 </div>
             </div>

@@ -19,9 +19,14 @@ namespace FollowSort.Data
         [Required]
         public string Name { get; set; }
 
-        public bool IncludeTextPosts { get; set; }
+        [Display(Name = "Include reposted photos"), Column("IncludeReposts")]
+        public bool IncludeRepostedPhotos { get; set; }
 
-        public bool IncludeReposts { get; set; }
+        [Display(Name = "Include original posts w/o photos"), Column("IncludeTextPosts")]
+        public bool IncludeNonPhotos { get; set; }
+
+        [Display(Name = "Include reposted posts w/o photos")]
+        public bool IncludeRepostedNonPhotos { get; set; }
 
         public DateTimeOffset LastChecked { get; set; }
 

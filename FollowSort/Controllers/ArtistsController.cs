@@ -62,7 +62,7 @@ namespace FollowSort.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SourceSite,Name,IncludeTextPosts,IncludeReposts")] Artist artist)
+        public async Task<IActionResult> Create([Bind("Id,SourceSite,Name,IncludeRepostedPhotos,IncludeNonPhotos,IncludeRepostedNonPhotos")] Artist artist)
         {
             if (ModelState.IsValid)
             {
@@ -99,7 +99,7 @@ namespace FollowSort.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("Id,IncludeTextPosts,IncludeReposts")] Artist artist)
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,IncludeRepostedPhotos,IncludeNonPhotos,IncludeRepostedNonPhotos")] Artist artist)
         {
             if (id != artist.Id)
             {
@@ -114,8 +114,9 @@ namespace FollowSort.Controllers
                 return NotFound();
             }
             
-            existing.IncludeTextPosts = artist.IncludeTextPosts;
-            existing.IncludeReposts = artist.IncludeReposts;
+            existing.IncludeRepostedPhotos = artist.IncludeRepostedPhotos;
+            existing.IncludeNonPhotos = artist.IncludeNonPhotos;
+            existing.IncludeRepostedNonPhotos = artist.IncludeRepostedNonPhotos;
             await _context.SaveChangesAsync();
 
             return View(artist);

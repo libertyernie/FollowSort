@@ -191,12 +191,13 @@ namespace FollowSort.Controllers
                     
                     foreach (var p in posts)
                     {
-                        string title = (p as TextPost)?.Title
-                                    ?? (p as QuotePost)?.Text
-                                    ?? (p as LinkPost)?.Title
-                                    ?? (p as ChatPost)?.Title
-                                    ?? (p as AudioPost)?.Caption
-                                    ?? (p as VideoPost)?.Caption
+                        string title = (p as TextPost)?.Title?.NullIfEmpty()
+                                    ?? (p as TextPost)?.Body?.NullIfEmpty()
+                                    ?? (p as QuotePost)?.Text?.NullIfEmpty()
+                                    ?? (p as LinkPost)?.Title?.NullIfEmpty()
+                                    ?? (p as ChatPost)?.Title?.NullIfEmpty()
+                                    ?? (p as AudioPost)?.Caption?.NullIfEmpty()
+                                    ?? (p as VideoPost)?.Caption?.NullIfEmpty()
                                     ?? p.Url;
                         string artistName = p.RebloggedRootName ?? p.RebloggedFromName ?? p.BlogName;
                         bool repost = artistName != p.BlogName;
@@ -220,7 +221,7 @@ namespace FollowSort.Controllers
                                     TextPost = false,
                                     Repost = repost,
                                     ThumbnailUrl = photo.OriginalSize.ImageUrl,
-                                    Name = pp.Caption ?? title,
+                                    Name = photo.Caption?.NullIfEmpty() ?? pp.Caption?.NullIfEmpty() ?? title,
                                     PostDate = p.Timestamp
                                 });
                             }

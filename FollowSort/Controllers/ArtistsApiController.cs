@@ -32,8 +32,8 @@ namespace FollowSort.Controllers
                 .ToListAsync();
         }
         
-        [HttpGet("{id}", Name = "Get")]
-        public async Task<Artist> GetAsync(Guid id)
+        [HttpGet("{id}")]
+        public async Task<Artist> Get(Guid id)
         {
             return await _context.Artists
                 .Where(a => a.Id == id)

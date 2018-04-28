@@ -22,19 +22,19 @@ namespace FollowSort.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IConsumerCredentials _twitterConsumerCredentials;
-        private readonly IFollowSortTumblrClientFactory _tumblrFactory;
+        private readonly ITumblrService _tumblrService;
+        private readonly ITwitterService _twitterService;
 
         public NotificationsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            IConsumerCredentials twitterConsumerCredentials,
-            IFollowSortTumblrClientFactory tumblrFactory)
+            ITumblrService tumblrService,
+            ITwitterService twitterService)
         {
             _context = context;
             _userManager = userManager;
-            _twitterConsumerCredentials = twitterConsumerCredentials;
-            _tumblrFactory = tumblrFactory;
+            _tumblrService = tumblrService;
+            _twitterService = twitterService;
         }
 
         public async Task<IActionResult> Index()
@@ -62,207 +62,23 @@ namespace FollowSort.Controllers
 
         public async Task<IActionResult> Refresh()
         {
-            string userId = _userManager.GetUserId(User);
-            var artists = await _context.Artists.Where(a => a.UserId == userId).ToListAsync();
-            await Task.WhenAll(RefreshTwitter(artists), RefreshTumblr(artists));
+            var user = await _userManager.GetUserAsync(User);
+
+            var token = new DontPanic.TumblrSharp.OAuth.Token(
+               await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token"),
+               await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret"));
+
+            var creds = new TwitterCredentials(_twitterService)
+            {
+                AccessToken = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
+                AccessTokenSecret = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
+            };
+
+            await Task.WhenAll(
+                _twitterService.RefreshAll(_context, creds, user.Id),
+                _tumblrService.RefreshAll(_context, token, user.Id));
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private async Task RefreshTwitter(IEnumerable<Artist> artists)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var creds = new TwitterCredentials(
-                _twitterConsumerCredentials.ConsumerKey,
-                _twitterConsumerCredentials.ConsumerSecret,
-                await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
-                await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
-            );
-
-            if (creds.AccessToken == null || creds.AccessTokenSecret == null)
-            {
-                throw new Exception("Cannot get new notifications from Twitter (not logged in)");
-            }
-
-            foreach (var a in artists)
-            {
-                if (a.SourceSite != SourceSite.Twitter) continue;
-
-                var tweets = await Auth.ExecuteOperationWithCredentials(creds, () => TimelineAsync.GetUserTimeline(new UserIdentifier(a.Name), new UserTimelineParameters
-                {
-                    SinceId = long.TryParse(a.LastCheckedSourceSiteId, out long l) ? l : 20,
-                    IncludeEntities = true,
-                    MaximumNumberOfTweetsToRetrieve = a.LastCheckedSourceSiteId == null ? 20 : 200
-                }));
-
-                if (tweets == null)
-                {
-                    var ex = ExceptionHandler.GetLastException();
-                    throw new Exception(ex?.TwitterDescription ?? "Could not get tweets", ex as Exception);
-                }
-
-                foreach (var t in tweets)
-                {
-                    var photos = t.Entities.Medias.Where(m => m.MediaType == "photo");
-
-                    if (photos.Any() && t.IsRetweet && !a.IncludeRepostedPhotos) continue;
-                    if (!photos.Any() && !t.IsRetweet && !a.IncludeNonPhotos) continue;
-                    if (!photos.Any() && t.IsRetweet && !a.IncludeRepostedNonPhotos) continue;
-
-                    if (photos.Any())
-                    {
-                        foreach (var p in photos)
-                        {
-                            _context.Notifications.Add(new Notification
-                            {
-                                UserId = a.UserId,
-                                SourceSite = a.SourceSite,
-                                SourceSiteId = t.IdStr,
-                                ArtistName = (t.RetweetedTweet?.CreatedBy ?? t.CreatedBy).ScreenName,
-                                RepostedByArtistName = t.CreatedBy.ScreenName,
-                                Url = t.Url,
-                                TextPost = false,
-                                Repost = t.IsRetweet,
-                                ThumbnailUrl = p.MediaURLHttps,
-                                Name = t.RetweetedTweet?.Text ?? t.Text,
-                                PostDate = t.CreatedAt
-                            });
-                        }
-                    }
-                    else
-                    {
-                        _context.Notifications.Add(new Notification
-                        {
-                            UserId = a.UserId,
-                            SourceSite = a.SourceSite,
-                            SourceSiteId = t.IdStr,
-                            ArtistName = (t.RetweetedTweet?.CreatedBy ?? t.CreatedBy).ScreenName,
-                            RepostedByArtistName = t.CreatedBy.ScreenName,
-                            Url = t.Url,
-                            TextPost = true,
-                            Repost = t.IsRetweet,
-                            ThumbnailUrl = null,
-                            Name = t.RetweetedTweet?.Text ?? t.Text,
-                            PostDate = t.CreatedAt
-                        });
-                    }
-                }
-
-                a.LastChecked = DateTimeOffset.UtcNow;
-                if (tweets.Any())
-                {
-                    a.LastCheckedSourceSiteId = tweets.Select(t => t.Id).Max().ToString();
-                }
-            }
-        }
-
-        private static async Task<IList<BasePost>> GetPosts(TumblrClient client, Artist a)
-        {
-            var posts = new List<BasePost>();
-            for (int i = 0; i < (a.LastCheckedSourceSiteId == null ? 1 : 10); i++)
-            {
-                var x = await client.GetPostsAsync(
-                    a.Name,
-                    i * 20,
-                    20,
-                    includeReblogInfo: true,
-                    filter: DontPanic.TumblrSharp.PostFilter.Text);
-                foreach (var p in x.Result)
-                {
-                    if (p.Timestamp <= a.LastChecked)
-                    {
-                        return posts;
-                    }
-                    posts.Add(p);
-                }
-            }
-            return posts;
-        }
-
-        private async Task RefreshTumblr(IEnumerable<Artist> artists)
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var access_token = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token");
-            var access_token_secret = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret");
-            if (access_token == null || access_token_secret == null)
-            {
-                throw new Exception("Cannot get new notifications from Tumblr (not logged in)");
-            }
-
-            using (var client = _tumblrFactory.Create(
-                access_token,
-                access_token_secret))
-            {
-                foreach (var a in artists)
-                {
-                    if (a.SourceSite != SourceSite.Tumblr) continue;
-
-                    var posts = await GetPosts(client, a);
-
-                    foreach (var p in posts)
-                    {
-                        string title = (p as TextPost)?.Title?.NullIfEmpty()
-                                    ?? (p as TextPost)?.Body?.NullIfEmpty()
-                                    ?? (p as QuotePost)?.Text?.NullIfEmpty()
-                                    ?? (p as LinkPost)?.Title?.NullIfEmpty()
-                                    ?? (p as ChatPost)?.Title?.NullIfEmpty()
-                                    ?? (p as AudioPost)?.Caption?.NullIfEmpty()
-                                    ?? (p as VideoPost)?.Caption?.NullIfEmpty()
-                                    ?? p.Url;
-                        string artistName = p.RebloggedRootName ?? p.RebloggedFromName ?? p.BlogName;
-                        bool repost = artistName != p.BlogName;
-
-                        if (p is PhotoPost && repost && !a.IncludeRepostedPhotos) continue;
-                        if (!(p is PhotoPost) && !repost && !a.IncludeNonPhotos) continue;
-                        if (!(p is PhotoPost) && repost && !a.IncludeRepostedNonPhotos) continue;
-
-                        if (p is PhotoPost pp)
-                        {
-                            foreach (var photo in pp.PhotoSet)
-                            {
-                                _context.Notifications.Add(new Notification
-                                {
-                                    UserId = a.UserId,
-                                    SourceSite = a.SourceSite,
-                                    SourceSiteId = p.Id.ToString(),
-                                    ArtistName = artistName,
-                                    RepostedByArtistName = p.BlogName,
-                                    Url = p.Url,
-                                    TextPost = false,
-                                    Repost = repost,
-                                    ThumbnailUrl = photo.OriginalSize.ImageUrl,
-                                    Name = photo.Caption?.NullIfEmpty() ?? pp.Caption?.NullIfEmpty() ?? title,
-                                    PostDate = p.Timestamp
-                                });
-                            }
-                        }
-                        else
-                        {
-                            _context.Notifications.Add(new Notification
-                            {
-                                UserId = a.UserId,
-                                SourceSite = a.SourceSite,
-                                SourceSiteId = p.Id.ToString(),
-                                ArtistName = artistName,
-                                RepostedByArtistName = p.BlogName,
-                                Url = p.Url,
-                                TextPost = true,
-                                Repost = repost,
-                                ThumbnailUrl = null,
-                                Name = title,
-                                PostDate = p.Timestamp
-                            });
-                        }
-                    }
-
-                    a.LastChecked = DateTimeOffset.UtcNow;
-                    if (posts.Any())
-                    {
-                        a.LastCheckedSourceSiteId = posts.Select(t => t.Id).Max().ToString();
-                    }
-                }
-            }
         }
     }
 }

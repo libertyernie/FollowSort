@@ -52,10 +52,10 @@ namespace FollowSort
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
-            services.AddSingleton(typeof(IConsumerCredentials), new ConsumerCredentials(
+            services.AddSingleton(typeof(ITwitterService), new TwitterService(
                 Configuration["Authentication:Twitter:ConsumerKey"],
                 Configuration["Authentication:Twitter:ConsumerSecret"]));
-            services.AddSingleton(typeof(IFollowSortTumblrClientFactory), new FollowSortTumblrClientFactory(
+            services.AddSingleton(typeof(ITumblrService), new TumblrService(
                 Configuration["Authentication:Tumblr:ConsumerKey"],
                 Configuration["Authentication:Tumblr:ConsumerSecret"]));
 

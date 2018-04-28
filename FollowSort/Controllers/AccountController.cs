@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using FollowSort.Models;
+using FollowSort.Data;
 using FollowSort.Models.AccountViewModels;
 using FollowSort.Services;
 

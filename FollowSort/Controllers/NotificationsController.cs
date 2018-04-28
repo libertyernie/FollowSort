@@ -79,7 +79,8 @@ namespace FollowSort.Controllers
                 await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
             );
 
-            if (creds.AccessToken == null || creds.AccessTokenSecret == null) {
+            if (creds.AccessToken == null || creds.AccessTokenSecret == null)
+            {
                 throw new Exception("Cannot get new notifications from Twitter (not logged in)");
             }
 
@@ -184,7 +185,8 @@ namespace FollowSort.Controllers
 
             var access_token = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token");
             var access_token_secret = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret");
-            if (access_token == null || access_token_secret == null) {
+            if (access_token == null || access_token_secret == null)
+            {
                 throw new Exception("Cannot get new notifications from Tumblr (not logged in)");
             }
 
@@ -197,7 +199,7 @@ namespace FollowSort.Controllers
                     if (a.SourceSite != SourceSite.Tumblr) continue;
 
                     var posts = await GetPosts(client, a);
-                    
+
                     foreach (var p in posts)
                     {
                         string title = (p as TextPost)?.Title?.NullIfEmpty()

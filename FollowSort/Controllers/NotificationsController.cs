@@ -23,13 +23,13 @@ namespace FollowSort.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConsumerCredentials _twitterConsumerCredentials;
-        private readonly FollowSortTumblrClientFactory _tumblrFactory;
+        private readonly IFollowSortTumblrClientFactory _tumblrFactory;
 
         public NotificationsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IConsumerCredentials twitterConsumerCredentials,
-            FollowSortTumblrClientFactory tumblrFactory)
+            IFollowSortTumblrClientFactory tumblrFactory)
         {
             _context = context;
             _userManager = userManager;
@@ -42,9 +42,7 @@ namespace FollowSort.Controllers
             string userId = _userManager.GetUserId(User);
             var q = _context.Notifications
                 .Where(n => n.UserId == userId)
-                //.Where(n => !n.TextPost)
-                //.Where(n => !n.Repost)
-                ;
+                .OrderByDescending(n => n.PostDate);
             return View(await q.ToListAsync());
         }
 
@@ -80,6 +78,10 @@ namespace FollowSort.Controllers
                 await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
                 await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
             );
+
+            if (creds.AccessToken == null || creds.AccessTokenSecret == null) {
+                throw new Exception("Cannot get new notifications from Twitter (not logged in)");
+            }
 
             foreach (var a in artists)
             {
@@ -179,9 +181,16 @@ namespace FollowSort.Controllers
         private async Task RefreshTumblr(IEnumerable<Artist> artists)
         {
             var user = await _userManager.GetUserAsync(User);
+
+            var access_token = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token");
+            var access_token_secret = await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret");
+            if (access_token == null || access_token_secret == null) {
+                throw new Exception("Cannot get new notifications from Tumblr (not logged in)");
+            }
+
             using (var client = _tumblrFactory.Create(
-                await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token"),
-                await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret")))
+                access_token,
+                access_token_secret))
             {
                 foreach (var a in artists)
                 {

@@ -55,7 +55,7 @@ namespace FollowSort
             services.AddSingleton(typeof(IConsumerCredentials), new ConsumerCredentials(
                 Configuration["Authentication:Twitter:ConsumerKey"],
                 Configuration["Authentication:Twitter:ConsumerSecret"]));
-            services.AddSingleton(typeof(FollowSortTumblrClientFactory), new FollowSortTumblrClientFactory(
+            services.AddSingleton(typeof(IFollowSortTumblrClientFactory), new FollowSortTumblrClientFactory(
                 Configuration["Authentication:Tumblr:ConsumerKey"],
                 Configuration["Authentication:Tumblr:ConsumerSecret"]));
 

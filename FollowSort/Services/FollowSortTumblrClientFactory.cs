@@ -8,7 +8,13 @@ using System.Threading.Tasks;
 
 namespace FollowSort.Services
 {
-    public class FollowSortTumblrClientFactory
+    public interface IFollowSortTumblrClientFactory
+    {
+        TumblrClient Create(Token oAuthToken = null);
+        TumblrClient Create(string key, string secret);
+    }
+
+    public class FollowSortTumblrClientFactory : IFollowSortTumblrClientFactory
     {
         private readonly TumblrClientFactory _factory = new TumblrClientFactory();
         private readonly string _consumerKey, _consumerSecret;
@@ -24,9 +30,9 @@ namespace FollowSort.Services
             return _factory.Create<TumblrClient>(_consumerKey, _consumerSecret, oAuthToken);
         }
 
-        public TumblrClient Create(string consumerKey, string consumerSecret)
+        public TumblrClient Create(string key, string secret)
         {
-            return _factory.Create<TumblrClient>(_consumerKey, _consumerSecret, new Token(consumerKey, consumerSecret));
+            return _factory.Create<TumblrClient>(_consumerKey, _consumerSecret, new Token(key, secret));
         }
     }
 }

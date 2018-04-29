@@ -20,7 +20,7 @@
                     : null;
             if (url !== null) {
                 const x = $("<li></li>")
-                    .text(a.name)
+                    .text(`${a.name} (${a.sourceSite})`)
                     .appendTo(ul);
                 tasks.unshift({
                     element: x,
@@ -51,7 +51,7 @@
         } catch (e) {
             console.error(e);
             $("<p></p>")
-                .text(`Error: ${e.message || "Could not load recent posts of all users."}`)
+                .text("Could not load recent posts of all users. Please try again later.")
                 .appendTo("#notifications");
             $("<a></a>")
                 .text("Return to notifications")

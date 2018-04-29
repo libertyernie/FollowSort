@@ -13,32 +13,49 @@
             credentials: "same-origin"
         }).then(r => r.json());
 
-        const promises = [];
-
+        const tasks = [];
         for (let a of artists) {
             const url = a.sourceSite === "Twitter" ? `/api/twitter/refresh/${a.id}`
                 : a.sourceSite === "Tumblr" ? `/api/tumblr/refresh/${a.id}`
                     : null;
             if (url !== null) {
-                const name = $("<li></li>")
+                const x = $("<li></li>")
                     .text(a.name)
                     .appendTo(ul);
-                const p = fetch(url, {
-                    method: "POST",
-                    credentials: "same-origin"
+                tasks.unshift({
+                    element: x,
+                    url: url
                 });
-                p.then(() => name.css("color", "green")).catch(() => name.css("color", "red"));
-                promises.push(p);
             }
         }
 
+        await $.getScript("/js/es6-promise-pool.js");
+        
+        var producer = () => {
+            const task = tasks.pop();
+            if (!task) return null;
+
+            const promise = /*Math.random() < 0.1 ? Promise.reject("test") :*/ fetch(task.url, {
+                method: "POST",
+                credentials: "same-origin"
+            });
+            promise
+                .then(() => task.element.css("color", "green"))
+                .catch(() => task.element.css("color", "red"));
+            return promise;
+        };
+        
         try {
-            await Promise.all(promises);
+            await new PromisePool(producer, 4).start();
             location.href = location.href;
         } catch (e) {
             console.error(e);
             $("<p></p>")
-                .text(e.message || "Could not load recent posts of all users.")
+                .text(`Error: ${e.message || "Could not load recent posts of all users."}`)
+                .appendTo("#notifications");
+            $("<a></a>")
+                .text("Return to notifications")
+                .attr("href", location.href)
                 .appendTo("#notifications");
         }
     });

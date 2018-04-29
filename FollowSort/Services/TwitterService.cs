@@ -80,7 +80,8 @@ namespace FollowSort.Services
             {
                 SinceId = long.TryParse(a.LastCheckedSourceSiteId, out long l) ? l : 20,
                 IncludeEntities = true,
-                MaximumNumberOfTweetsToRetrieve = a.LastCheckedSourceSiteId == null ? 20 : 200
+                MaximumNumberOfTweetsToRetrieve = a.LastCheckedSourceSiteId == null ? 20 : 200,
+                ExcludeReplies = true
             }));
 
             if (tweets == null)

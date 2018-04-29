@@ -60,6 +60,7 @@ namespace FollowSort.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
         public async Task<IActionResult> Refresh()
         {
             var user = await _userManager.GetUserAsync(User);

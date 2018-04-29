@@ -62,7 +62,12 @@ namespace FollowSort
             TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
 
             services.AddMvc()
-                .AddSessionStateTempDataProvider();
+                .AddSessionStateTempDataProvider()
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                    options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                });
 
             services.AddSession();
         }

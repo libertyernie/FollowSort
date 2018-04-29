@@ -24,17 +24,20 @@ namespace FollowSort.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ITumblrService _tumblrService;
         private readonly ITwitterService _twitterService;
+        private readonly IDeviantArtService _deviantArtService;
 
         public NotificationsController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             ITumblrService tumblrService,
-            ITwitterService twitterService)
+            ITwitterService twitterService,
+            IDeviantArtService deviantArtService)
         {
             _context = context;
             _userManager = userManager;
             _tumblrService = tumblrService;
             _twitterService = twitterService;
+            _deviantArtService = deviantArtService;
         }
 
         public async Task<IActionResult> Index()
@@ -75,9 +78,12 @@ namespace FollowSort.Controllers
                 AccessTokenSecret = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
             };
 
+            var daToken = await _userManager.GetAuthenticationTokenAsync(user, "DeviantArt", "access_token");
+
             await Task.WhenAll(
                 _twitterService.RefreshAll(_context, creds, user.Id),
-                _tumblrService.RefreshAll(_context, token, user.Id));
+                _tumblrService.RefreshAll(_context, token, user.Id),
+                _deviantArtService.RefreshAll(_context, daToken, user.Id));
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

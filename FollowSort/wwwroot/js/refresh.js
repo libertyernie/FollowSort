@@ -15,9 +15,7 @@
 
         const tasks = [];
         for (let a of artists) {
-            const url = a.sourceSite === "Twitter" ? `/api/twitter/refresh/${a.id}`
-                : a.sourceSite === "Tumblr" ? `/api/tumblr/refresh/${a.id}`
-                    : null;
+            const url = `/api/artists/${a.id}/refresh`;
             if (url !== null) {
                 const x = $("<li></li>")
                     .text(`${a.name} (${a.sourceSite})`)

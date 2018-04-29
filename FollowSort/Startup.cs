@@ -58,6 +58,7 @@ namespace FollowSort
             services.AddSingleton(typeof(ITumblrService), new TumblrService(
                 Configuration["Authentication:Tumblr:ConsumerKey"],
                 Configuration["Authentication:Tumblr:ConsumerSecret"]));
+            services.AddSingleton(typeof(IDeviantArtService), new DeviantArtService());
 
             TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
 

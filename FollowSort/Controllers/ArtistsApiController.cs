@@ -19,19 +19,13 @@ namespace FollowSort.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly ITumblrService _tumblrService;
-        private readonly ITwitterService _twitterService;
 
         public ArtistsApiController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager,
-            ITumblrService tumblrService,
-            ITwitterService twitterService)
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _tumblrService = tumblrService;
-            _twitterService = twitterService;
         }
 
         [HttpGet]
@@ -51,6 +45,23 @@ namespace FollowSort.Controllers
                 .SingleOrDefaultAsync();
         }
 
+        [HttpPost, Route("{id}/refresh")]
+        public async Task<IActionResult> Refresh(Guid id, bool save = true)
+        {
+            var artist = await Get(id);
+            switch (artist.SourceSite)
+            {
+                case SourceSite.Tumblr:
+                    return Redirect($"/api/tumblr/refresh/{id}");
+                case SourceSite.Twitter:
+                    return Redirect($"/api/twitter/refresh/{id}");
+                case SourceSite.DeviantArt:
+                    return Redirect($"/api/deviantart/refresh/{id}");
+                default:
+                    return NotFound();
+            }
+        }
+
         [HttpGet("{id}/avatar")]
         public async Task<IActionResult> GetAvatar(Guid id)
         {
@@ -60,6 +71,8 @@ namespace FollowSort.Controllers
                     return Redirect($"/api/tumblr/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
                 case SourceSite.Twitter:
                     return Redirect($"/api/twitter/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
+                case SourceSite.DeviantArt:
+                    return Redirect($"/api/deviantart/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
                 default:
                     return NotFound();
             }

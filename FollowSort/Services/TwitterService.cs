@@ -108,6 +108,7 @@ namespace FollowSort.Services
                 if (!photos.Any() && !t.IsRetweet && !a.IncludeNonPhotos) continue;
                 if (!photos.Any() && t.IsRetweet && !a.IncludeRepostedNonPhotos) continue;
 
+                System.Diagnostics.Debug.WriteLine($"Adding Twitter post {t.IdStr} from {(t.RetweetedTweet?.CreatedBy ?? t.CreatedBy).ScreenName}");
                 if (photos.Any())
                 {
                     foreach (var p in photos)

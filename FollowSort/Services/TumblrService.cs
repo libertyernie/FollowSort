@@ -143,6 +143,7 @@ namespace FollowSort.Services
                     if (!(p is PhotoPost) && !repost && !a.IncludeNonPhotos) continue;
                     if (!(p is PhotoPost) && repost && !a.IncludeRepostedNonPhotos) continue;
 
+                    System.Diagnostics.Debug.WriteLine($"Adding Tumblr post {p.Id} from {artistName}");
                     if (p is PhotoPost pp)
                     {
                         foreach (var photo in pp.PhotoSet)

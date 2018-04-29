@@ -95,7 +95,7 @@ namespace FollowSort
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=Notifications}/{action=Index}/{id?}");
             });
         }
     }

@@ -26,7 +26,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="navbar-brand">FollowSort</a>
+                <a asp-area="" asp-controller="Home" asp-action="About" class="navbar-brand">FollowSort</a>
             </div>
             <div class="navbar-collapse collapse">
                 @await Html.PartialAsync("_LoginPartial")
@@ -37,7 +37,8 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; 2018 - FollowSort</p>
+            <p><a href="https://github.com/libertyernie/FollowSort">FollowSort</a></p>
+            <p>&copy; 2018 libertyernie</p>
         </footer>
     </div>
 

@@ -61,5 +61,15 @@ namespace FollowSort.Controllers
                 id,
                 save: true);
         }
+
+        [HttpGet, Route("avatar/byname/{name}")]
+        public IActionResult GetAvatar(string name, int? size = null)
+        {
+            int newSize = new int[] { 16, 24, 30, 40, 48, 64, 96, 128, 512 }
+                .Where(s => s >= size)
+                .DefaultIfEmpty(512)
+                .First();
+            return Redirect($"https://api.tumblr.com/v2/blog/{name}/avatar/{newSize}");
+        }
     }
 }

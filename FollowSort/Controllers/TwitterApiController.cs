@@ -56,5 +56,18 @@ namespace FollowSort.Controllers
 
             await _twitterService.Refresh(_context, creds, user.Id, id, save: true);
         }
+
+        [HttpGet, Route("avatar/byname/{name}")]
+        public async Task<IActionResult> GetAvatar(string name, int? size = null)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var creds = new TwitterCredentials(_twitterService)
+            {
+                AccessToken = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
+                AccessTokenSecret = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
+            };
+
+            return Redirect(await _twitterService.GetAvatarUrlAsync(creds, name));
+        }
     }
 }

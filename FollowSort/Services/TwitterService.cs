@@ -25,6 +25,8 @@ namespace FollowSort.Services
             ITwitterCredentials creds,
             Artist a,
             bool save = false);
+
+        Task<string> GetAvatarUrlAsync(ITwitterCredentials creds, string screenName);
     }
 
     public class TwitterService : ConsumerCredentials, ITwitterService
@@ -141,6 +143,12 @@ namespace FollowSort.Services
             }
 
             if (save) await context.SaveChangesAsync();
+        }
+
+        public async Task<string> GetAvatarUrlAsync(ITwitterCredentials creds, string screenName)
+        {
+            var user = await Auth.ExecuteOperationWithCredentials(creds, () => UserAsync.GetUserFromScreenName(screenName));
+            return user?.ProfileImageUrlHttps;
         }
     }
 }

@@ -28,6 +28,14 @@ namespace FollowSort.Data
         [Display(Name = "Include reposted posts w/o photos")]
         public bool IncludeRepostedNonPhotos { get; set; }
 
+        [Display(Name = "Filter by tags (comma-separated)")]
+        public string TagFilterStr { get; set; }
+
+        [Display(Name = "Include potentially sensitive or NSFW content")]
+        public bool Nsfw { get; set; }
+
+        public IEnumerable<string> TagFilter => (TagFilterStr ?? "").Split(',').Select(s => s.Replace("#", "").Trim()).Where(s => s != "");
+
         public DateTimeOffset LastChecked { get; set; }
 
         public string LastCheckedSourceSiteId { get; set; }

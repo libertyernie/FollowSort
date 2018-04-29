@@ -15,8 +15,7 @@
             <div class="form-group">
                 <label asp-for="SourceSite" class="control-label"></label>
                 <select asp-for="SourceSite" class="form-control">
-                    @foreach (object value in Enum.GetValues(typeof(FollowSort.Data.SourceSite)))
-                    {
+                    @foreach (object value in Enum.GetValues(typeof(FollowSort.Data.SourceSite))) {
                         <option value="@((int)value)">@((FollowSort.Data.SourceSite)value)</option>
                     }
                 </select>
@@ -45,6 +44,18 @@
                 <div class="checkbox">
                     <label>
                         <input asp-for="IncludeRepostedNonPhotos" checked /> @Html.DisplayNameFor(model => model.IncludeRepostedNonPhotos)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label asp-for="TagFilterStr" class="control-label"></label>
+                <input asp-for="TagFilterStr" class="form-control" />
+                <span asp-validation-for="TagFilterStr" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input asp-for="Nsfw" /> @Html.DisplayNameFor(model => model.Nsfw)
                     </label>
                 </div>
             </div>

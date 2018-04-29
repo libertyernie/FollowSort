@@ -29,6 +29,9 @@
                 @Html.DisplayNameFor(model => model.IncludeRepostedNonPhotos)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.TagFilterStr)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.LastChecked)
             </th>
             <th></th>
@@ -54,6 +57,9 @@
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.IncludeRepostedNonPhotos)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TagFilterStr)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.LastChecked)

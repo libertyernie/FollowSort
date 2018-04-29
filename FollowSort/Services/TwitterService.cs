@@ -92,6 +92,16 @@ namespace FollowSort.Services
 
             foreach (var t in tweets)
             {
+                if (!a.Nsfw && t.PossiblySensitive) continue;
+
+                if (a.TagFilter.Any())
+                {
+                    if (!t.Entities.Hashtags.Select(h => h.Text.Replace("#", "")).Intersect(a.TagFilter, StringComparer.InvariantCultureIgnoreCase).Any())
+                    {
+                        continue;
+                    }
+                }
+
                 var photos = t.Entities.Medias.Where(m => m.MediaType == "photo");
 
                 if (photos.Any() && t.IsRetweet && !a.IncludeRepostedPhotos) continue;

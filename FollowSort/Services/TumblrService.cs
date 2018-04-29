@@ -105,10 +105,20 @@ namespace FollowSort.Services
 
             using (var client = new TumblrClientFactory().Create<TumblrClient>(_consumerKey, _consumerSecret, token))
             {
+                var blog = await client.GetBlogInfoAsync(a.Name);
+
                 var posts = await GetPosts(client, a);
 
                 foreach (var p in posts)
                 {
+                    if (a.TagFilter.Any())
+                    {
+                        if (!p.Tags.Intersect(a.TagFilter, StringComparer.InvariantCultureIgnoreCase).Any())
+                        {
+                            continue;
+                        }
+                    }
+
                     string title = (p as TextPost)?.Title?.NullIfEmpty()
                                 ?? (p as TextPost)?.Body?.NullIfEmpty()
                                 ?? (p as QuotePost)?.Text?.NullIfEmpty()
@@ -119,6 +129,15 @@ namespace FollowSort.Services
                                 ?? p.Url;
                     string artistName = p.RebloggedRootName ?? p.RebloggedFromName ?? p.BlogName;
                     bool repost = artistName != p.BlogName;
+
+                    if (!a.Nsfw && repost)
+                    {
+                        var postblog = artistName == p.BlogName ? blog : await client.GetBlogInfoAsync(artistName);
+                        if (postblog.IsNsfw)
+                        {
+                            continue;
+                        }
+                    }
 
                     if (p is PhotoPost && repost && !a.IncludeRepostedPhotos) continue;
                     if (!(p is PhotoPost) && !repost && !a.IncludeNonPhotos) continue;

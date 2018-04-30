@@ -71,7 +71,7 @@ namespace FollowSort.Controllers
             await Task.WhenAll(
                 _twitterService.RefreshAll(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), user.Id),
                 _tumblrService.RefreshAll(_context, await _userManager.GetTumblrTokenAsync(user), user.Id),
-                _deviantArtService.RefreshAll(_context, await _userManager.GetDeviantArtAccessToken(user), user.Id));
+                _deviantArtService.RefreshAll(_context, user.Id));
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

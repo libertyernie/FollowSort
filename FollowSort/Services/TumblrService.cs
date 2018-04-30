@@ -132,8 +132,7 @@ namespace FollowSort.Services
 
                     if (!a.Nsfw && repost)
                     {
-                        var postblog = artistName == p.BlogName ? blog : await client.GetBlogInfoAsync(artistName);
-                        if (postblog.IsNsfw)
+                        if (blog.IsNsfw)
                         {
                             continue;
                         }

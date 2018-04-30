@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using DontPanic.TumblrSharp.OAuth;
 using FollowSort.Data;
 using FollowSort.Models;
 using FollowSort.Services;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Tweetinvi.Models;
 
 namespace FollowSort.Controllers
 {
@@ -19,13 +21,22 @@ namespace FollowSort.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ITwitterService _twitterService;
+        private readonly ITumblrService _tumblrService;
+        private readonly IDeviantArtService _deviantArtService;
 
         public ArtistsApiController(
             ApplicationDbContext context,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ITwitterService twitterService,
+            ITumblrService tumblrService,
+            IDeviantArtService deviantArtService)
         {
             _context = context;
             _userManager = userManager;
+            _twitterService = twitterService;
+            _tumblrService = tumblrService;
+            _deviantArtService = deviantArtService;
         }
 
         [HttpGet]
@@ -45,35 +56,64 @@ namespace FollowSort.Controllers
                 .SingleOrDefaultAsync();
         }
 
+        private async Task<ITwitterCredentials> GetTwitterCredentialsAsync(ApplicationUser user)
+        {
+            return new TwitterCredentials(_twitterService)
+            {
+                AccessToken = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
+                AccessTokenSecret = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
+            };
+        }
+
+        private async Task<Token> GetTumblrTokenAsync(ApplicationUser user)
+        {
+            return new Token(
+                await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token"),
+                await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret"));
+        }
+
+        private Task<string> GetDeviantArtAccessToken(ApplicationUser user)
+        {
+            return _userManager.GetAuthenticationTokenAsync(user, "DeviantArt", "access_token");
+        }
+        
         [HttpPost, Route("{id}/refresh")]
-        public async Task<IActionResult> Refresh(Guid id, bool save = true)
+        public async Task<IActionResult> Refresh(Guid id)
         {
             var user = await _userManager.GetUserAsync(User);
             var artist = await Get(id);
             switch (artist.SourceSite)
             {
                 case SourceSite.Tumblr:
-                    return RedirectPreserveMethod($"/api/tumblr/refresh/{id}");
+                    await _tumblrService.Refresh(_context, await GetTumblrTokenAsync(user), user.Id, id, save: true);
+                    return NoContent();
                 case SourceSite.Twitter:
-                    return RedirectPreserveMethod($"/api/twitter/refresh/{id}");
+                    await _twitterService.Refresh(_context, await GetTwitterCredentialsAsync(user), user.Id, id, save: true);
+                    return NoContent();
                 case SourceSite.DeviantArt:
-                    return RedirectPreserveMethod($"/api/deviantart/refresh/{id}");
+                    await _deviantArtService.RefreshAll(_context, await GetDeviantArtAccessToken(user), user.Id, save: true);
+                    return NoContent();
                 default:
                     return NotFound();
             }
         }
 
         [HttpGet("{id}/avatar")]
-        public async Task<IActionResult> GetAvatar(Guid id)
+        public async Task<IActionResult> GetAvatar(Guid id, int? size = null)
         {
+            var user = await _userManager.GetUserAsync(User);
             var artist = await Get(id);
             switch (artist.SourceSite) {
                 case SourceSite.Tumblr:
-                    return Redirect($"/api/tumblr/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
+                    int newSize = new int[] { 16, 24, 30, 40, 48, 64, 96, 128, 512 }
+                        .Where(s => s >= size)
+                        .DefaultIfEmpty(512)
+                        .First();
+                    return Redirect($"https://api.tumblr.com/v2/blog/{WebUtility.UrlEncode(artist.Name)}/avatar/{newSize}");
                 case SourceSite.Twitter:
-                    return Redirect($"/api/twitter/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
+                    return Redirect(await _twitterService.GetAvatarUrlAsync(await GetTwitterCredentialsAsync(user), artist.Name));
                 case SourceSite.DeviantArt:
-                    return Redirect($"/api/deviantart/avatar/byname/{WebUtility.UrlEncode(artist.Name)}");
+                    return Redirect(await _deviantArtService.GetAvatarUrlAsync(await GetDeviantArtAccessToken(user), artist.Name));
                 default:
                     return NotFound();
             }

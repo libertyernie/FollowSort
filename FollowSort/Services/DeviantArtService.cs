@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,28 +16,66 @@ namespace FollowSort.Services
     public interface IDeviantArtService
     {
         Task RefreshAll(ApplicationDbContext context,
-            string token,
             string userId,
             bool save = false);
         Task Refresh(ApplicationDbContext context,
-            string token,
             string userId,
             Guid artistId,
             bool save = false);
         Task Refresh(ApplicationDbContext context,
-            string token,
             Artist a,
             bool save = false);
-
-        Task<string> GetAvatarUrlAsync(string token, string screenName);
     }
 
     public class DeviantArtService : IDeviantArtService
     {
-        private static SemaphoreSlim LibraryLock = new SemaphoreSlim(1, 1);
+        private static SemaphoreSlim UpdateAccessTokenLock = new SemaphoreSlim(1, 1);
+
+        private async Task UpdateAccessTokenAsync()
+        {
+            if (DeviantartApi.Requester.AccessTokenExpire < DateTime.UtcNow) return;
+
+            await UpdateAccessTokenLock.WaitAsync();
+            try
+            {
+                if (DeviantartApi.Requester.AccessTokenExpire < DateTime.UtcNow)
+                {
+                    // Access token is expired - get a new one
+                    DateTime now = DateTime.UtcNow;
+                    var req = WebRequest.CreateHttp("https://www.deviantart.com/oauth2/token");
+                    req.Method = "POST";
+                    req.ContentType = "application/x-www-form-urlencoded";
+                    using (var sw = new StreamWriter(await req.GetRequestStreamAsync()))
+                    {
+                        await sw.WriteAsync($"client_id={DeviantartApi.Requester.AppClientId}&");
+                        await sw.WriteAsync($"client_secret={DeviantartApi.Requester.AppSecret}&");
+                        await sw.WriteAsync($"grant_type=client_credentials");
+                    }
+                    using (var resp = await req.GetResponseAsync())
+                    using (var sr = new StreamReader(resp.GetResponseStream()))
+                    {
+                        var tr = JsonConvert.DeserializeAnonymousType(await sr.ReadToEndAsync(), new
+                        {
+                            expires_in = 0,
+                            status = "",
+                            access_token = "",
+                            token_type = ""
+                        });
+                        if (tr.status != "success") throw new Exception("OAuth client credentials request not successful");
+                        if (tr.token_type != "Bearer") throw new Exception("Token recieved was not a bearer token");
+                        DeviantartApi.Requester.AccessToken = tr.access_token;
+                        DeviantartApi.Requester.AccessTokenExpire = now.AddSeconds(tr.expires_in);
+                        DeviantartApi.Requester.AutoAccessTokenCheckingDisabled = true;
+                    }
+                }
+            }
+            finally
+            {
+                UpdateAccessTokenLock.Release();
+            }
+        }
 
         public async Task RefreshAll(ApplicationDbContext context,
-            string token,
             string userId,
             bool save = false)
         {
@@ -45,12 +84,11 @@ namespace FollowSort.Services
                 .Where(x => x.SourceSite == SourceSite.DeviantArt)
                 .ToListAsync();
 
-            await Task.WhenAll(artists.Select(a => Refresh(context, token, a)));
+            await Task.WhenAll(artists.Select(a => Refresh(context, a)));
             if (save) await context.SaveChangesAsync();
         }
 
         public async Task Refresh(ApplicationDbContext context,
-            string token,
             string userId,
             Guid artistId,
             bool save = false)
@@ -65,10 +103,10 @@ namespace FollowSort.Services
             if (a.SourceSite != SourceSite.DeviantArt)
                 throw new Exception($"Artist {artistId} is not a DeviantArt user");
 
-            await Refresh(context, token, a, save);
+            await Refresh(context, a, save);
         }
         
-        private static async Task<IList<Deviation>> GetPosts(string token, Artist a)
+        private static async Task<IList<Deviation>> GetPosts(Artist a)
         {
             var posts = new List<Deviation>();
             var request = new DeviantartApi.Requests.Gallery.AllRequest
@@ -92,7 +130,7 @@ namespace FollowSort.Services
             return posts;
         }
 
-        private static async Task<IList<Deviation>> GetJournals(string token, Artist a)
+        private static async Task<IList<Deviation>> GetJournals(Artist a)
         {
             var posts = new List<Deviation>();
             var request = new DeviantartApi.Requests.Browse.User.JournalsRequest(a.Name)
@@ -116,30 +154,16 @@ namespace FollowSort.Services
         }
 
         public async Task Refresh(ApplicationDbContext context,
-            string token,
             Artist a,
             bool save = false)
         {
-            if (string.IsNullOrEmpty(token))
-            {
-                throw new Exception("Cannot get new notifications from DeviantArt (token null or empty)");
-            }
-
             IList<Deviation> posts, journals;
 
-            await LibraryLock.WaitAsync();
+            await UpdateAccessTokenAsync();
+            posts = await GetPosts(a);
 
-            try
-            {
-                DeviantartApi.Requester.AccessToken = token;
-
-                posts = await GetPosts(token, a);
-                journals = await GetJournals(token, a);
-            }
-            finally
-            {
-                LibraryLock.Release();
-            }
+            await UpdateAccessTokenAsync();
+            journals = await GetJournals(a);
 
             foreach (var p in posts)
             {
@@ -202,24 +226,6 @@ namespace FollowSort.Services
             }
 
             if (save) await context.SaveChangesAsync();
-        }
-
-        public async Task<string> GetAvatarUrlAsync(string token, string screenName)
-        {
-            await LibraryLock.WaitAsync();
-
-            try
-            {
-                DeviantartApi.Requester.AccessToken = token;
-
-                var request = new DeviantartApi.Requests.User.WhoIsRequest(new[] { screenName });
-                var user = await request.ExecuteAsync();
-                return user.Result.Results.First().UserIconUrl.OriginalString;
-            }
-            finally
-            {
-                LibraryLock.Release();
-            }
         }
     }
 }

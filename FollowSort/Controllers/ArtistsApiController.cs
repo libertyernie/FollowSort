@@ -70,7 +70,7 @@ namespace FollowSort.Controllers
                     await _twitterService.Refresh(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), user.Id, id, save: true);
                     return NoContent();
                 case SourceSite.DeviantArt:
-                    await _deviantArtService.RefreshAll(_context, await _userManager.GetDeviantArtAccessToken(user), user.Id, save: true);
+                    await _deviantArtService.Refresh(_context, user.Id, id, save: true);
                     return NoContent();
                 default:
                     return NotFound();
@@ -82,17 +82,18 @@ namespace FollowSort.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var artist = await Get(id);
+            string urlName = WebUtility.UrlEncode(artist.Name);
             switch (artist.SourceSite) {
                 case SourceSite.Tumblr:
                     int newSize = new int[] { 16, 24, 30, 40, 48, 64, 96, 128, 512 }
                         .Where(s => s >= size)
                         .DefaultIfEmpty(512)
                         .First();
-                    return Redirect($"https://api.tumblr.com/v2/blog/{WebUtility.UrlEncode(artist.Name)}/avatar/{newSize}");
+                    return Redirect($"https://api.tumblr.com/v2/blog/{urlName}/avatar/{newSize}");
                 case SourceSite.Twitter:
                     return Redirect(await _twitterService.GetAvatarUrlAsync(await _userManager.GetTwitterCredentialsAsync(_twitterService, user), artist.Name));
                 case SourceSite.DeviantArt:
-                    return Redirect(await _deviantArtService.GetAvatarUrlAsync(await _userManager.GetDeviantArtAccessToken(user), artist.Name));
+                    return Redirect($"https://a.deviantart.net/avatars/{urlName[0]}/{urlName[1]}/{urlName}.png");
                 default:
                     return NotFound();
             }

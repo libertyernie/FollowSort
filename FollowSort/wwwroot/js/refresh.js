@@ -1,4 +1,4 @@
-﻿window.addEventListener("load", () => {
+﻿$(() => {
     $("#refreshButton").click(async e => {
         e.preventDefault();
 
@@ -54,6 +54,11 @@
             $("<p></p>")
                 .text("Could not load recent posts of all users. Please try again later.")
                 .appendTo("#notifications");
+            if (artists.some(a => a.sourceSite == "DeviantArt")) {
+                $("<p></p>")
+                    .text("If you're having problems with DeviantArt, you may need to log out and log back in using your DeviantArt account.")
+                    .appendTo("#notifications");
+            }
             $("<a></a>")
                 .text("Return to notifications")
                 .attr("href", location.href)

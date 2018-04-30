@@ -1,4 +1,4 @@
-﻿window.addEventListener("load", () => {
+﻿document.addEventListener("ready", () => {
     $("#refreshButton").click(async e => {
         e.preventDefault();
 
@@ -33,10 +33,13 @@
             const task = tasks.pop();
             if (!task) return null;
 
-            const promise = /*Math.random() < 0.1 ? Promise.reject("test") :*/ fetch(task.url, {
-                method: "POST",
-                credentials: "same-origin"
-            });
+            const promise = (async () => {
+                const r = await fetch(task.url, {
+                    method: "POST",
+                    credentials: "same-origin"
+                });
+                if (!r.ok) throw new Error(`Request failed with status code ${r.ok}`);
+            })();
             promise
                 .then(() => task.element.css("color", "green"))
                 .catch(() => task.element.css("color", "red"));

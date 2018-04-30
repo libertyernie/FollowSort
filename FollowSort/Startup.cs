@@ -43,6 +43,7 @@ namespace FollowSort
                 o.ClientId = Configuration["Authentication:DeviantArt:ClientId"];
                 o.ClientSecret = Configuration["Authentication:DeviantArt:ClientSecret"];
                 o.SaveTokens = true;
+                o.Scope.Add("browse");
             }).AddTumblr(o => {
                 o.ConsumerKey = Configuration["Authentication:Tumblr:ConsumerKey"];
                 o.ConsumerSecret = Configuration["Authentication:Tumblr:ConsumerSecret"];
@@ -60,8 +61,11 @@ namespace FollowSort
                 Configuration["Authentication:Tumblr:ConsumerSecret"]));
             services.AddSingleton(typeof(IDeviantArtService), new DeviantArtService());
 
-            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
+            DeviantartApi.Requester.AppClientId = Configuration["Authentication:DeviantArt:ClientId"];
+            DeviantartApi.Requester.AppSecret = Configuration["Authentication:DeviantArt:ClientSecret"];
 
+            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
+            
             services.AddMvc()
                 .AddSessionStateTempDataProvider()
                 .AddJsonOptions(options =>

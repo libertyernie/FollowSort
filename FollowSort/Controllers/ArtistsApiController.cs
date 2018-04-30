@@ -48,15 +48,16 @@ namespace FollowSort.Controllers
         [HttpPost, Route("{id}/refresh")]
         public async Task<IActionResult> Refresh(Guid id, bool save = true)
         {
+            var user = await _userManager.GetUserAsync(User);
             var artist = await Get(id);
             switch (artist.SourceSite)
             {
                 case SourceSite.Tumblr:
-                    return Redirect($"/api/tumblr/refresh/{id}");
+                    return RedirectPreserveMethod($"/api/tumblr/refresh/{id}");
                 case SourceSite.Twitter:
-                    return Redirect($"/api/twitter/refresh/{id}");
+                    return RedirectPreserveMethod($"/api/twitter/refresh/{id}");
                 case SourceSite.DeviantArt:
-                    return Redirect($"/api/deviantart/refresh/{id}");
+                    return RedirectPreserveMethod($"/api/deviantart/refresh/{id}");
                 default:
                     return NotFound();
             }

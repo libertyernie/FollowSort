@@ -1,4 +1,5 @@
-﻿using FollowSort.Data;
+﻿using DeviantartApi.Objects;
+using FollowSort.Data;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System;
@@ -63,51 +64,24 @@ namespace FollowSort.Services
 
             await Refresh(context, token, a, save);
         }
-
-        public class Response<T>
-        {
-            public bool has_more;
-            public int? next_offset;
-            public IList<T> results;
-        }
-
-        public class Deviation
-        {
-            public Guid deviationid;
-            public string url;
-            public string title;
-            public long published_time;
-            public IList<Thumbnail> thumbnails;
-            public bool is_mature;
-        }
-
-        public class Thumbnail
-        {
-            public string url;
-            public int width, height;
-            public bool transparency;
-        }
-
+        
         private static async Task<IList<Deviation>> GetPosts(string token, Artist a)
         {
             var posts = new List<Deviation>();
-            int offset = 0;
+            var request = new DeviantartApi.Requests.Gallery.AllRequest();
+            request.Limit = 24;
+            request.Username = a.Name;
             for (int i = 0; i < (a.LastChecked == null ? 1 : 10); i++)
             {
-                var galleryRequest = WebRequest.CreateHttp($"https://www.deviantart.com/api/v1/oauth2/gallery/all?username={WebUtility.UrlEncode(a.Name)}&offset={offset}&limit=24&access_token={token}");
-                using (var resp = await galleryRequest.GetResponseAsync())
-                using (var sr = new StreamReader(resp.GetResponseStream()))
+                var resp = await request.GetNextPageAsync();
+                foreach (var d in resp.Result.Results)
                 {
-                    var obj = JsonConvert.DeserializeObject<Response<Deviation>>(await sr.ReadToEndAsync());
-                    foreach (var d in obj.results)
+                    DateTimeOffset timestamp = d.PublishedTime ?? DateTimeOffset.Now;
+                    if (timestamp <= a.LastChecked)
                     {
-                        DateTimeOffset timestamp = DateTimeOffset.FromUnixTimeSeconds(d.published_time);
-                        if (timestamp <= a.LastChecked)
-                        {
-                            return posts;
-                        }
-                        posts.Add(d);
+                        return posts;
                     }
+                    posts.Add(d);
                 }
             }
             return posts;
@@ -116,23 +90,19 @@ namespace FollowSort.Services
         private static async Task<IList<Deviation>> GetJournals(string token, Artist a)
         {
             var posts = new List<Deviation>();
-            int offset = 0;
-            for (int i = 0; i < (a.LastChecked == null ? 1 : 20); i++)
+            var request = new DeviantartApi.Requests.Browse.User.JournalsRequest(a.Name);
+            request.Limit = 10;
+            for (int i = 0; i < (a.LastChecked == null ? 1 : 10); i++)
             {
-                var journalRequest = WebRequest.CreateHttp($"https://www.deviantart.com/api/v1/oauth2/browse/user/journals?username={WebUtility.UrlEncode(a.Name)}&offset={offset}&limit=10&access_token={token}");
-                using (var resp = await journalRequest.GetResponseAsync())
-                using (var sr = new StreamReader(resp.GetResponseStream()))
+                var resp = await request.GetNextPageAsync();
+                foreach (var d in resp.Result.Results)
                 {
-                    var obj = JsonConvert.DeserializeObject<Response<Deviation>>(await sr.ReadToEndAsync());
-                    foreach (var d in obj.results)
+                    DateTimeOffset timestamp = d.PublishedTime ?? DateTimeOffset.Now;
+                    if (timestamp <= a.LastChecked)
                     {
-                        DateTimeOffset timestamp = DateTimeOffset.FromUnixTimeSeconds(d.published_time);
-                        if (timestamp <= a.LastChecked)
-                        {
-                            return posts;
-                        }
-                        posts.Add(d);
+                        return posts;
                     }
+                    posts.Add(d);
                 }
             }
             return posts;
@@ -148,6 +118,8 @@ namespace FollowSort.Services
                 throw new Exception("Cannot get new notifications from DeviantArt (token null or empty)");
             }
 
+            DeviantartApi.Requester.AccessToken = token;
+
             var posts = await GetPosts(token, a);
 
             foreach (var p in posts)
@@ -157,21 +129,22 @@ namespace FollowSort.Services
                     throw new NotImplementedException("Cannot filter DeviantArt submissions by tags (not implemented)");
                 }
 
-                if (!a.Nsfw && p.is_mature) continue;
+                if (!a.Nsfw && p.IsMature == true) continue;
 
-                System.Diagnostics.Debug.WriteLine($"Adding DeviantArt post {p.deviationid} from {a.Name}");
-                context.Notifications.Add(new Notification
+                System.Diagnostics.Debug.WriteLine($"Adding DeviantArt post {p.DeviationId} from {a.Name}");
+                string thumbnail = p.Thumbs.Select(t => t.Src).FirstOrDefault();
+                context.Notifications.Add(new Data.Notification
                 {
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
-                    SourceSiteId = p.deviationid.ToString(),
+                    SourceSiteId = p.DeviationId,
                     ArtistName = a.Name,
-                    Url = p.url,
-                    TextPost = false,
+                    Url = p.Url.OriginalString,
+                    TextPost = !p.Thumbs.Any(),
                     Repost = false,
-                    ThumbnailUrl = p.thumbnails.First()?.url,
-                    Name = p.title,
-                    PostDate = DateTimeOffset.FromUnixTimeSeconds(p.published_time)
+                    ThumbnailUrl = thumbnail,
+                    Name = p.Title,
+                    PostDate = p.PublishedTime ?? DateTime.UtcNow
                 });
             }
 
@@ -184,21 +157,21 @@ namespace FollowSort.Services
                     throw new NotImplementedException("Cannot filter DeviantArt journals by tags (not implemented)");
                 }
 
-                if (!a.Nsfw && p.is_mature) continue;
+                if (!a.Nsfw && p.IsMature == true) continue;
 
-                System.Diagnostics.Debug.WriteLine($"Adding DeviantArt journal {p.deviationid} from {a.Name}");
-                context.Notifications.Add(new Notification
+                System.Diagnostics.Debug.WriteLine($"Adding DeviantArt journal {p.DeviationId} from {a.Name}");
+                context.Notifications.Add(new Data.Notification
                 {
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
-                    SourceSiteId = p.deviationid.ToString(),
+                    SourceSiteId = p.DeviationId,
                     ArtistName = a.Name,
-                    Url = p.url,
+                    Url = p.Url.OriginalString,
                     TextPost = true,
                     Repost = false,
                     ThumbnailUrl = null,
-                    Name = p.title,
-                    PostDate = DateTimeOffset.FromUnixTimeSeconds(p.published_time)
+                    Name = p.Title,
+                    PostDate = p.PublishedTime ?? DateTime.UtcNow
                 });
             }
 
@@ -206,8 +179,8 @@ namespace FollowSort.Services
             if (posts.Any())
             {
                 a.LastCheckedSourceSiteId = posts
-                    .OrderByDescending(p => p.published_time)
-                    .Select(p => p.deviationid.ToString())
+                    .OrderByDescending(p => p.PublishedTime)
+                    .Select(p => p.DeviationId)
                     .First();
             }
 
@@ -216,33 +189,11 @@ namespace FollowSort.Services
 
         public async Task<string> GetAvatarUrlAsync(string token, string screenName)
         {
-            var galleryRequest = WebRequest.CreateHttp($"https://www.deviantart.com/api/v1/oauth2/user/whois?usernames={WebUtility.UrlEncode(screenName)}&access_token={token}");
-            try
-            {
-                using (var resp = await galleryRequest.GetResponseAsync())
-                using (var sr = new StreamReader(resp.GetResponseStream()))
-                {
-                    var obj = JsonConvert.DeserializeAnonymousType(await sr.ReadToEndAsync(), new
-                    {
-                        results = new[]
-                        {
-                        new
-                        {
-                            usericon = ""
-                        }
-                    }
-                    });
-                    return obj.results[0].usericon;
-                }
-            } catch (WebException ex)
-            {
-                using (var resp = ex.Response)
-                using (var sr = new StreamReader(resp.GetResponseStream()))
-                {
-                    string html = await sr.ReadToEndAsync();
-                    throw;
-                }
-            }
+            DeviantartApi.Requester.AccessToken = token;
+
+            var request = new DeviantartApi.Requests.User.WhoIsRequest(new[] { screenName });
+            var user = await request.ExecuteAsync();
+            return user.Result.Results.First().UserIconUrl.OriginalString;
         }
     }
 }

@@ -67,23 +67,11 @@ namespace FollowSort.Controllers
         public async Task<IActionResult> Refresh()
         {
             var user = await _userManager.GetUserAsync(User);
-
-            var token = new DontPanic.TumblrSharp.OAuth.Token(
-               await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token"),
-               await _userManager.GetAuthenticationTokenAsync(user, "Tumblr", "access_token_secret"));
-
-            var creds = new TwitterCredentials(_twitterService)
-            {
-                AccessToken = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token"),
-                AccessTokenSecret = await _userManager.GetAuthenticationTokenAsync(user, "Twitter", "access_token_secret")
-            };
-
-            var daToken = await _userManager.GetAuthenticationTokenAsync(user, "DeviantArt", "access_token");
-
+            
             await Task.WhenAll(
-                _twitterService.RefreshAll(_context, creds, user.Id),
-                _tumblrService.RefreshAll(_context, token, user.Id),
-                _deviantArtService.RefreshAll(_context, daToken, user.Id));
+                _twitterService.RefreshAll(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), user.Id),
+                _tumblrService.RefreshAll(_context, await _userManager.GetTumblrTokenAsync(user), user.Id),
+                _deviantArtService.RefreshAll(_context, await _userManager.GetDeviantArtAccessToken(user), user.Id));
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

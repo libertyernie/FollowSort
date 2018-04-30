@@ -1,4 +1,4 @@
-﻿document.addEventListener("ready", () => {
+﻿window.addEventListener("load", () => {
     $("#refreshButton").click(async e => {
         e.preventDefault();
 

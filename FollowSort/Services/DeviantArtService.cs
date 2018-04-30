@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FollowSort.Services
@@ -32,6 +33,8 @@ namespace FollowSort.Services
 
     public class DeviantArtService : IDeviantArtService
     {
+        private static SemaphoreSlim LibraryLock = new SemaphoreSlim(1, 1);
+
         public async Task RefreshAll(ApplicationDbContext context,
             string token,
             string userId,
@@ -68,10 +71,12 @@ namespace FollowSort.Services
         private static async Task<IList<Deviation>> GetPosts(string token, Artist a)
         {
             var posts = new List<Deviation>();
-            var request = new DeviantartApi.Requests.Gallery.AllRequest();
-            request.Limit = 24;
-            request.Username = a.Name;
-            for (int i = 0; i < (a.LastChecked == null ? 1 : 10); i++)
+            var request = new DeviantartApi.Requests.Gallery.AllRequest
+            {
+                Limit = 24,
+                Username = a.Name
+            };
+            for (int i = 0; i < (a.LastCheckedSourceSiteId == null ? 1 : 10); i++)
             {
                 var resp = await request.GetNextPageAsync();
                 foreach (var d in resp.Result.Results)
@@ -90,9 +95,11 @@ namespace FollowSort.Services
         private static async Task<IList<Deviation>> GetJournals(string token, Artist a)
         {
             var posts = new List<Deviation>();
-            var request = new DeviantartApi.Requests.Browse.User.JournalsRequest(a.Name);
-            request.Limit = 10;
-            for (int i = 0; i < (a.LastChecked == null ? 1 : 10); i++)
+            var request = new DeviantartApi.Requests.Browse.User.JournalsRequest(a.Name)
+            {
+                Limit = 10
+            };
+            for (int i = 0; i < (a.LastCheckedSourceSiteId == null ? 1 : 10); i++)
             {
                 var resp = await request.GetNextPageAsync();
                 foreach (var d in resp.Result.Results)
@@ -118,9 +125,21 @@ namespace FollowSort.Services
                 throw new Exception("Cannot get new notifications from DeviantArt (token null or empty)");
             }
 
-            DeviantartApi.Requester.AccessToken = token;
+            IList<Deviation> posts, journals;
 
-            var posts = await GetPosts(token, a);
+            await LibraryLock.WaitAsync();
+
+            try
+            {
+                DeviantartApi.Requester.AccessToken = token;
+
+                posts = await GetPosts(token, a);
+                journals = await GetJournals(token, a);
+            }
+            finally
+            {
+                LibraryLock.Release();
+            }
 
             foreach (var p in posts)
             {
@@ -147,8 +166,6 @@ namespace FollowSort.Services
                     PostDate = p.PublishedTime ?? DateTime.UtcNow
                 });
             }
-
-            var journals = await GetJournals(token, a);
 
             foreach (var p in journals)
             {
@@ -189,11 +206,20 @@ namespace FollowSort.Services
 
         public async Task<string> GetAvatarUrlAsync(string token, string screenName)
         {
-            DeviantartApi.Requester.AccessToken = token;
+            await LibraryLock.WaitAsync();
 
-            var request = new DeviantartApi.Requests.User.WhoIsRequest(new[] { screenName });
-            var user = await request.ExecuteAsync();
-            return user.Result.Results.First().UserIconUrl.OriginalString;
+            try
+            {
+                DeviantartApi.Requester.AccessToken = token;
+
+                var request = new DeviantartApi.Requests.User.WhoIsRequest(new[] { screenName });
+                var user = await request.ExecuteAsync();
+                return user.Result.Results.First().UserIconUrl.OriginalString;
+            }
+            finally
+            {
+                LibraryLock.Release();
+            }
         }
     }
 }

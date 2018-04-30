@@ -298,6 +298,37 @@ namespace FollowSort.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> AdditionalSources()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            return View(new AdditionalSourcesViewModel
+            {
+                WeasylApiKey = user.WeasylApiKey,
+                FurryNetworkBearerToken = user.FurryNetworkBearerToken,
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AdditionalSources(AdditionalSourcesViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+            }
+
+            user.WeasylApiKey = model.WeasylApiKey;
+            user.FurryNetworkBearerToken = model.FurryNetworkBearerToken;
+            await _userManager.UpdateAsync(user);
+            return View(model);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> TwoFactorAuthentication()
         {
             var user = await _userManager.GetUserAsync(User);

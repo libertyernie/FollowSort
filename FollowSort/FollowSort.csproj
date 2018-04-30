@@ -10,6 +10,8 @@
     <Compile Remove="Data\Migrations\20180425194449_ArtistAndNotification.Designer.cs" />
     <Compile Remove="Data\Migrations\20180427200731_FinerGrainedRepostControl.cs" />
     <Compile Remove="Data\Migrations\20180427200731_FinerGrainedRepostControl.Designer.cs" />
+    <Compile Remove="Data\Migrations\20180430204353_OtherSiteKeys.cs" />
+    <Compile Remove="Data\Migrations\20180430204353_OtherSiteKeys.Designer.cs" />
   </ItemGroup>
 
 

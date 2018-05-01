@@ -10,11 +10,84 @@
     reposts and/or non-picture posts.
 </p>
 
-<p>
-    To follow users on a particular site, you'll need to have an account
-    there. To follow users on multiple sites, just log into FollowSort with
-    one of them and add the others to your list of external logins, which you
-    can access once logged in by clicking the "hello" link in the navigation
-    bar. You can also assign a FollowSort-specific password, which will let
-    you remove your accounts later.
-</p>
+<p>Notes</p>
+
+<ul>
+    <li>
+        Twitter
+        <ul>
+            <li>
+                To follow Twitter users, you'll need to either log in with
+                your Twitter account or add it to your list of
+                <a asp-controller="Manage" asp-action="ExternalLogins">
+                    external logins.
+                </a>
+            </li>
+        </ul>
+    </li>
+    <li>
+        Tumblr
+        <ul>
+            <li>
+                To follow Tumblr users, you'll need to either log in with
+                your Tumblr account or add it to your list of
+                <a asp-controller="Manage" asp-action="ExternalLogins">
+                    external logins.
+                </a>
+            </li>
+            <li>
+                For Tumblr, unlike other sites, FollowSort determines if a
+                post is NSFW by looking at the blog that you're following.
+                If you don't have NSFW content enabled, you won't receieve
+                any notifications from NSFW blogs.
+            </li>
+        </ul>
+    </li>
+    <li>
+        DeviantArt
+        <ul>
+            <li>
+                Scraps are not included.
+            </li>
+        </ul>
+    </li>
+    <li>
+        FurAffinity
+        <ul>
+            <li>
+                Uses <a href="https://faexport.boothale.net/">FAExport.</a>
+            </li>
+            <li>
+                Scraps are not currently included.
+            </li>
+            <li>
+                Tag filtering is not supported.
+            </li>
+            <li>
+                NSFW filtering is not currently supported.
+            </li>
+            <li>
+                Use the type FurAffinity_Favorites if you want to follow
+                someone's favorites instead of their gallery.
+            </li>
+        </ul>
+    </li>
+    <li>
+        Weasyl
+        <ul>
+            <li>
+                Get a Weasyl API key from
+                <a href="https://www.weasyl.com/control/apikeys">
+                    https://www.weasyl.com/control/apikeys
+                </a>
+                and enter it on the
+                <a asp-controller="Manage" asp-action="AdditionalSources">
+                    additional sources page.
+                </a>
+            </li>
+            <li>
+                Characters and journal entries are not included.
+            </li>
+        </ul>
+    </li>
+</ul>

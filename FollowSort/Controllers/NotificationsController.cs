@@ -22,10 +22,12 @@ namespace FollowSort.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+
         private readonly ITumblrService _tumblrService;
         private readonly ITwitterService _twitterService;
         private readonly IDeviantArtService _deviantArtService;
         private readonly IWeasylService _weasylService;
+        private readonly IFurAffinityService _furAffinityService;
 
         public NotificationsController(
             ApplicationDbContext context,
@@ -33,7 +35,8 @@ namespace FollowSort.Controllers
             ITumblrService tumblrService,
             ITwitterService twitterService,
             IDeviantArtService deviantArtService,
-            IWeasylService weasylService)
+            IWeasylService weasylService,
+            IFurAffinityService furAffinityService)
         {
             _context = context;
             _userManager = userManager;
@@ -41,6 +44,7 @@ namespace FollowSort.Controllers
             _twitterService = twitterService;
             _deviantArtService = deviantArtService;
             _weasylService = weasylService;
+            _furAffinityService = furAffinityService;
         }
 
         public async Task<IActionResult> Index()
@@ -48,7 +52,8 @@ namespace FollowSort.Controllers
             string userId = _userManager.GetUserId(User);
             var q = _context.Notifications
                 .Where(n => n.UserId == userId)
-                .OrderByDescending(n => n.PostDate);
+                .OrderByDescending(n => n.PostDate)
+                .ThenByDescending(n => n.SourceSiteId);
             return View(await q.ToListAsync());
         }
 
@@ -75,7 +80,8 @@ namespace FollowSort.Controllers
                 _twitterService.RefreshAll(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), user.Id),
                 _tumblrService.RefreshAll(_context, await _userManager.GetTumblrTokenAsync(user), user.Id),
                 _deviantArtService.RefreshAll(_context, user.Id),
-                _weasylService.RefreshAll(_context, user.WeasylApiKey, user.Id));
+                _weasylService.RefreshAll(_context, user.WeasylApiKey, user.Id),
+                _furAffinityService.RefreshAll(_context, user.Id));
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }

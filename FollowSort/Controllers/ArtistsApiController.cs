@@ -25,6 +25,7 @@ namespace FollowSort.Controllers
         private readonly ITumblrService _tumblrService;
         private readonly IDeviantArtService _deviantArtService;
         private readonly IWeasylService _weasylService;
+        private readonly IFurAffinityService _furAffinityService;
 
         public ArtistsApiController(
             ApplicationDbContext context,
@@ -32,7 +33,8 @@ namespace FollowSort.Controllers
             ITwitterService twitterService,
             ITumblrService tumblrService,
             IDeviantArtService deviantArtService,
-            IWeasylService weasylService)
+            IWeasylService weasylService,
+            IFurAffinityService furAffinityService)
         {
             _context = context;
             _userManager = userManager;
@@ -40,6 +42,7 @@ namespace FollowSort.Controllers
             _tumblrService = tumblrService;
             _deviantArtService = deviantArtService;
             _weasylService = weasylService;
+            _furAffinityService = furAffinityService;
         }
 
         [HttpGet]
@@ -67,16 +70,19 @@ namespace FollowSort.Controllers
             switch (artist.SourceSite)
             {
                 case SourceSite.Tumblr:
-                    await _tumblrService.Refresh(_context, await _userManager.GetTumblrTokenAsync(user), user.Id, id, save: true);
+                    await _tumblrService.Refresh(_context, await _userManager.GetTumblrTokenAsync(user), artist, save: true);
                     return NoContent();
                 case SourceSite.Twitter:
-                    await _twitterService.Refresh(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), user.Id, id, save: true);
+                    await _twitterService.Refresh(_context, await _userManager.GetTwitterCredentialsAsync(_twitterService, user), artist, save: true);
                     return NoContent();
                 case SourceSite.DeviantArt:
-                    await _deviantArtService.Refresh(_context, user.Id, id, save: true);
+                    await _deviantArtService.Refresh(_context, artist, save: true);
                     return NoContent();
                 case SourceSite.Weasyl:
-                    await _weasylService.Refresh(_context, user.WeasylApiKey, user.Id, id, save: true);
+                    await _weasylService.Refresh(_context, user.WeasylApiKey, artist, save: true);
+                    return NoContent();
+                case SourceSite.FurAffinity:
+                    await _furAffinityService.Refresh(_context, artist, save: true);
                     return NoContent();
                 default:
                     return NotFound();
@@ -102,6 +108,8 @@ namespace FollowSort.Controllers
                     return Redirect($"https://a.deviantart.net/avatars/{urlName[0]}/{urlName[1]}/{urlName}.png");
                 case SourceSite.Weasyl:
                     return Redirect(await _weasylService.GetAvatarUrlAsync(user.WeasylApiKey, artist.Name));
+                case SourceSite.FurAffinity:
+                    return Redirect(await _furAffinityService.GetAvatarUrlAsync(artist.Name));
                 default:
                     return NotFound();
             }

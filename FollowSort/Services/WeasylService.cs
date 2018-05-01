@@ -58,7 +58,7 @@ namespace FollowSort.Services
             if (a == null)
                 throw new Exception($"Artist {artistId} not found");
             if (a.SourceSite != SourceSite.Weasyl)
-                throw new Exception($"Artist {artistId} is not a Twitter user");
+                throw new Exception($"Artist {artistId} is not a Weasyl user");
 
             await Refresh(context, apiKey, a, save);
         }

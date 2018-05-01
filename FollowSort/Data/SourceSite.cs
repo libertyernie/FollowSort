@@ -8,6 +8,7 @@ namespace FollowSort.Data {
         Tumblr,
         Twitter,
         DeviantArt,
-        Weasyl
+        Weasyl,
+        FurAffinity
     }
 }

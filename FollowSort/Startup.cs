@@ -60,6 +60,7 @@ namespace FollowSort
                 Configuration["Authentication:Tumblr:ConsumerKey"],
                 Configuration["Authentication:Tumblr:ConsumerSecret"]));
             services.AddSingleton(typeof(IDeviantArtService), new DeviantArtService());
+            services.AddSingleton(typeof(IWeasylService), new WeasylService());
 
             DeviantartApi.Requester.AppClientId = Configuration["Authentication:DeviantArt:ClientId"];
             DeviantartApi.Requester.AppSecret = Configuration["Authentication:DeviantArt:ClientSecret"];

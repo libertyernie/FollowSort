@@ -24,19 +24,22 @@ namespace FollowSort.Controllers
         private readonly ITwitterService _twitterService;
         private readonly ITumblrService _tumblrService;
         private readonly IDeviantArtService _deviantArtService;
+        private readonly IWeasylService _weasylService;
 
         public ArtistsApiController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             ITwitterService twitterService,
             ITumblrService tumblrService,
-            IDeviantArtService deviantArtService)
+            IDeviantArtService deviantArtService,
+            IWeasylService weasylService)
         {
             _context = context;
             _userManager = userManager;
             _twitterService = twitterService;
             _tumblrService = tumblrService;
             _deviantArtService = deviantArtService;
+            _weasylService = weasylService;
         }
 
         [HttpGet]
@@ -72,6 +75,9 @@ namespace FollowSort.Controllers
                 case SourceSite.DeviantArt:
                     await _deviantArtService.Refresh(_context, user.Id, id, save: true);
                     return NoContent();
+                case SourceSite.Weasyl:
+                    await _weasylService.Refresh(_context, user.WeasylApiKey, user.Id, id, save: true);
+                    return NoContent();
                 default:
                     return NotFound();
             }
@@ -94,6 +100,8 @@ namespace FollowSort.Controllers
                     return Redirect(await _twitterService.GetAvatarUrlAsync(await _userManager.GetTwitterCredentialsAsync(_twitterService, user), artist.Name));
                 case SourceSite.DeviantArt:
                     return Redirect($"https://a.deviantart.net/avatars/{urlName[0]}/{urlName[1]}/{urlName}.png");
+                case SourceSite.Weasyl:
+                    return Redirect(await _weasylService.GetAvatarUrlAsync(user.WeasylApiKey, artist.Name));
                 default:
                     return NotFound();
             }

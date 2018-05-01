@@ -7,6 +7,7 @@ namespace FollowSort.Data {
     public enum SourceSite {
         Tumblr,
         Twitter,
-        DeviantArt
+        DeviantArt,
+        Weasyl
     }
 }

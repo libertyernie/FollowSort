@@ -58,35 +58,15 @@ namespace FollowSort.Services
 
             await Refresh(context, a, save);
         }
-
-        private interface IFASubmission
-        {
-            string Id { get; }
-            string Title { get; }
-            string Thumbnail { get; }
-            string Link { get; }
-        }
-
-        private class FASubmission : IFASubmission
+        
+        private class FASubmission
         {
             public string Id { get; set; }
             public string Title { get; set; }
             public string Thumbnail { get; set; }
             public string Link { get; set; }
         }
-
-        private class FAFullSubmission : IFASubmission
-        {
-            public string Title { get; set; }
-            public string Thumbnail { get; set; }
-            public string Link { get; set; }
-            public DateTimeOffset Posted_at { get; set; }
-            public string Rating { get; set; }
-            public IEnumerable<string> Keywords { get; set; }
-
-            public string Id => Link.Split('/').Where(s => s != "").Last();
-        }
-
+        
         private class FAJournal
         {
             public string Id { get; set; }
@@ -95,9 +75,9 @@ namespace FollowSort.Services
             public DateTimeOffset Posted_at { get; set; }
         }
 
-        private static async Task<IList<IFASubmission>> GetSubmissionsAsync(Artist a)
+        private static async Task<IList<FASubmission>> GetSubmissionsAsync(Artist a)
         {
-            var list = new List<IFASubmission>();
+            var list = new List<FASubmission>();
 
             bool newUser = a.LastCheckedSourceSiteId == null;
             long prevId = long.TryParse(a.LastCheckedSourceSiteId, out long tmp1) ? tmp1 : 0;
@@ -113,21 +93,7 @@ namespace FollowSort.Services
                         if (long.TryParse(o.Id, out long tmp2) && tmp2 <= prevId)
                             return list;
 
-                        if (!a.Nsfw || a.TagFilter.Any())
-                        {
-                            // We need more information.
-                            var req2 = WebRequest.CreateHttp($"https://faexport.boothale.net/submission/{o.Id}.json");
-                            using (var resp2 = await req2.GetResponseAsync())
-                            using (var sr2 = new StreamReader(resp2.GetResponseStream()))
-                            {
-                                list.Add(JsonConvert.DeserializeObject<FAFullSubmission>(await sr2.ReadToEndAsync()));
-                            }
-                        }
-                        else
-                        {
-                            // We have enough information (we don't have post date, but we can just make one up.)
-                            list.Add(o);
-                        }
+                        list.Add(o);
                     }
                 }
             }
@@ -159,20 +125,16 @@ namespace FollowSort.Services
 
             return list;
         }
-
-        private static IEnumerable<Notification> FilterSubmissions(Artist a, IEnumerable<IFASubmission> submissions)
+        
+        public async Task Refresh(ApplicationDbContext context,
+            Artist a,
+            bool save = false)
         {
             var now = DateTime.UtcNow;
+            var submissions = await GetSubmissionsAsync(a);
             foreach (var s in submissions)
             {
-                var details = s as FAFullSubmission;
-                if (!a.Nsfw)
-                    if (details?.Rating != "General")
-                        continue;
-                if (a.TagFilter.Any())
-                    if (details?.Keywords?.Intersect(a.TagFilter, StringComparer.InvariantCultureIgnoreCase)?.Any() != true)
-                        continue;
-                yield return new Notification
+                context.Notifications.Add(new Notification
                 {
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
@@ -182,19 +144,8 @@ namespace FollowSort.Services
                     TextPost = false,
                     ThumbnailUrl = s.Thumbnail,
                     Name = s.Title,
-                    PostDate = details?.Posted_at ?? now
-                };
-            }
-        }
-
-        public async Task Refresh(ApplicationDbContext context,
-            Artist a,
-            bool save = false)
-        {
-            var submissions = await GetSubmissionsAsync(a);
-            foreach (var n in FilterSubmissions(a, submissions))
-            {
-                context.Notifications.Add(n);
+                    PostDate = now
+                });
             }
 
             if (a.IncludeNonPhotos)

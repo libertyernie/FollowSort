@@ -66,6 +66,18 @@ namespace FollowSort.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (artist.SourceSite == SourceSite.FurAffinity && !artist.Nsfw)
+                {
+                    ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
+                    return View(artist);
+                }
+
+                if (artist.SourceSite == SourceSite.FurAffinity && artist.TagFilter.Any())
+                {
+                    ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
+                    return View(artist);
+                }
+
                 artist.Id = Guid.NewGuid();
                 artist.UserId = _userManager.GetUserId(User);
                 artist.LastChecked = DateTimeOffset.MinValue;
@@ -113,7 +125,19 @@ namespace FollowSort.Controllers
             {
                 return NotFound();
             }
-            
+
+            if (artist.SourceSite == SourceSite.FurAffinity && !artist.Nsfw)
+            {
+                ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
+                return View(artist);
+            }
+
+            if (artist.SourceSite == SourceSite.FurAffinity && artist.TagFilter.Any())
+            {
+                ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
+                return View(artist);
+            }
+
             existing.IncludeRepostedPhotos = artist.IncludeRepostedPhotos;
             existing.IncludeNonPhotos = artist.IncludeNonPhotos;
             existing.IncludeRepostedNonPhotos = artist.IncludeRepostedNonPhotos;

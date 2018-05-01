@@ -29,10 +29,10 @@
                 @Html.DisplayNameFor(model => model.IncludeRepostedNonPhotos)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.TagFilterStr)
+                @Html.DisplayNameFor(model => model.Nsfw)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.LastChecked)
+                @Html.DisplayNameFor(model => model.TagFilterStr)
             </th>
             <th></th>
         </tr>
@@ -59,10 +59,10 @@
                     @Html.DisplayFor(modelItem => item.IncludeRepostedNonPhotos)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.TagFilterStr)
+                    @Html.DisplayFor(modelItem => item.Nsfw)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.LastChecked)
+                    @Html.DisplayFor(modelItem => item.TagFilterStr)
                 </td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

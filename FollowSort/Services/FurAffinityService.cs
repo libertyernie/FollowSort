@@ -34,7 +34,7 @@ namespace FollowSort.Services
         {
             var artists = await context.Artists
                 .Where(x => x.UserId == userId)
-                .Where(x => x.SourceSite == SourceSite.FurAffinity)
+                .Where(x => x.SourceSite == SourceSite.FurAffinity || x.SourceSite == SourceSite.FurAffinity_Favorites)
                 .ToListAsync();
 
             await Task.WhenAll(artists.Select(a => Refresh(context, a)));
@@ -53,7 +53,7 @@ namespace FollowSort.Services
 
             if (a == null)
                 throw new Exception($"Artist {artistId} not found");
-            if (a.SourceSite != SourceSite.FurAffinity)
+            if (a.SourceSite != SourceSite.FurAffinity && a.SourceSite != SourceSite.FurAffinity_Favorites)
                 throw new Exception($"Artist {artistId} is not a FurAffinity user");
 
             await Refresh(context, a, save);
@@ -80,17 +80,19 @@ namespace FollowSort.Services
             var list = new List<FASubmission>();
 
             bool newUser = a.LastCheckedSourceSiteId == null;
-            long prevId = long.TryParse(a.LastCheckedSourceSiteId, out long tmp1) ? tmp1 : 0;
             for (int i = 1; i <= (newUser ? 1 : 3); i++)
             {
-                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/gallery.json?full=1&page={i}");
+                string folder = a.SourceSite == SourceSite.FurAffinity_Favorites
+                    ? "favorites"
+                    : "gallery";
+                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/{folder}.json?full=1&page={i}");
                 using (var resp1 = await req1.GetResponseAsync())
                 using (var sr1 = new StreamReader(resp1.GetResponseStream()))
                 {
                     var array = JsonConvert.DeserializeObject<IEnumerable<FASubmission>>(await sr1.ReadToEndAsync());
                     foreach (var o in array)
                     {
-                        if (long.TryParse(o.Id, out long tmp2) && tmp2 <= prevId)
+                        if (o.Id == a.LastCheckedSourceSiteId)
                             return list;
 
                         list.Add(o);
@@ -105,20 +107,22 @@ namespace FollowSort.Services
         {
             var list = new List<FAJournal>();
 
-            bool newUser = a.LastCheckedSourceSiteId == null;
-            long prevId = long.TryParse(a.LastCheckedSourceSiteId, out long tmp1) ? tmp1 : 0;
-            for (int i = 1; i <= (newUser ? 1 : 3); i++)
+            if (a.SourceSite != SourceSite.FurAffinity_Favorites)
             {
-                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/journals.json?full=1&page={i}");
-                using (var resp1 = await req1.GetResponseAsync())
-                using (var sr1 = new StreamReader(resp1.GetResponseStream()))
+                bool newUser = a.LastCheckedSourceSiteId == null;
+                for (int i = 1; i <= (newUser ? 1 : 3); i++)
                 {
-                    var array = JsonConvert.DeserializeObject<IEnumerable<FAJournal>>(await sr1.ReadToEndAsync());
-                    foreach (var o in array)
+                    var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/journals.json?full=1&page={i}");
+                    using (var resp1 = await req1.GetResponseAsync())
+                    using (var sr1 = new StreamReader(resp1.GetResponseStream()))
                     {
-                        if (o.Posted_at <= a.LastChecked) return list;
+                        var array = JsonConvert.DeserializeObject<IEnumerable<FAJournal>>(await sr1.ReadToEndAsync());
+                        foreach (var o in array)
+                        {
+                            if (o.Posted_at <= a.LastChecked) return list;
 
-                        list.Add(o);
+                            list.Add(o);
+                        }
                     }
                 }
             }
@@ -139,7 +143,9 @@ namespace FollowSort.Services
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
                     SourceSiteId = s.Id,
+                    Repost = true,
                     ArtistName = a.Name,
+                    RepostedByArtistName = a.Name,
                     Url = s.Link,
                     TextPost = false,
                     ThumbnailUrl = s.Thumbnail,

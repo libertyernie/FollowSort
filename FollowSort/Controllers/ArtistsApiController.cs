@@ -86,6 +86,7 @@ namespace FollowSort.Controllers
                     await _weasylService.Refresh(_context, user.WeasylApiKey, artist, save: true);
                     return NoContent();
                 case SourceSite.FurAffinity:
+                case SourceSite.FurAffinity_Favorites:
                     await _furAffinityService.Refresh(_context, artist, save: true);
                     return NoContent();
                 default:
@@ -118,6 +119,7 @@ namespace FollowSort.Controllers
                     case SourceSite.Weasyl:
                         return await _weasylService.GetAvatarUrlAsync(user.WeasylApiKey, artist.Name);
                     case SourceSite.FurAffinity:
+                    case SourceSite.FurAffinity_Favorites:
                         return await _furAffinityService.GetAvatarUrlAsync(artist.Name);
                     default:
                         return null;

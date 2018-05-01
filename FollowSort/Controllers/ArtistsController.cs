@@ -29,6 +29,8 @@ namespace FollowSort.Controllers
         {
             return View(await _context.Artists
                 .Where(a => a.UserId == _userManager.GetUserId(User))
+                .OrderBy(a => a.Name)
+                .ThenBy(a => a.SourceSite)
                 .ToListAsync());
         }
 
@@ -66,16 +68,21 @@ namespace FollowSort.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (artist.SourceSite == SourceSite.FurAffinity && !artist.Nsfw)
+                switch (artist.SourceSite)
                 {
-                    ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
-                    return View(artist);
-                }
-
-                if (artist.SourceSite == SourceSite.FurAffinity && artist.TagFilter.Any())
-                {
-                    ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
-                    return View(artist);
+                    case SourceSite.FurAffinity:
+                    case SourceSite.FurAffinity_Favorites:
+                        if (!artist.Nsfw)
+                        {
+                            ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
+                            return View(artist);
+                        }
+                        else if (artist.TagFilter.Any())
+                        {
+                            ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
+                            return View(artist);
+                        }
+                        break;
                 }
 
                 artist.Id = Guid.NewGuid();
@@ -126,16 +133,21 @@ namespace FollowSort.Controllers
                 return NotFound();
             }
 
-            if (artist.SourceSite == SourceSite.FurAffinity && !artist.Nsfw)
+            switch (artist.SourceSite)
             {
-                ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
-                return View(artist);
-            }
-
-            if (artist.SourceSite == SourceSite.FurAffinity && artist.TagFilter.Any())
-            {
-                ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
-                return View(artist);
+                case SourceSite.FurAffinity:
+                case SourceSite.FurAffinity_Favorites:
+                    if (!artist.Nsfw)
+                    {
+                        ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
+                        return View(artist);
+                    }
+                    else if (artist.TagFilter.Any())
+                    {
+                        ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
+                        return View(artist);
+                    }
+                    break;
             }
 
             existing.IncludeRepostedPhotos = artist.IncludeRepostedPhotos;

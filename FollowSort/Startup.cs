@@ -53,6 +53,8 @@ namespace FollowSort
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
+            services.AddMemoryCache();
+
             services.AddSingleton(typeof(ITwitterService), new TwitterService(
                 Configuration["Authentication:Twitter:ConsumerKey"],
                 Configuration["Authentication:Twitter:ConsumerSecret"]));

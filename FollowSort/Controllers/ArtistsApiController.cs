@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Tweetinvi.Models;
 
 namespace FollowSort.Controllers
@@ -21,6 +22,7 @@ namespace FollowSort.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IMemoryCache _memoryCache;
         private readonly ITwitterService _twitterService;
         private readonly ITumblrService _tumblrService;
         private readonly IDeviantArtService _deviantArtService;
@@ -30,6 +32,7 @@ namespace FollowSort.Controllers
         public ArtistsApiController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
+            IMemoryCache memoryCache,
             ITwitterService twitterService,
             ITumblrService tumblrService,
             IDeviantArtService deviantArtService,
@@ -38,6 +41,7 @@ namespace FollowSort.Controllers
         {
             _context = context;
             _userManager = userManager;
+            _memoryCache = memoryCache;
             _twitterService = twitterService;
             _tumblrService = tumblrService;
             _deviantArtService = deviantArtService;
@@ -88,31 +92,41 @@ namespace FollowSort.Controllers
                     return NotFound();
             }
         }
-
+        
         [HttpGet("{id}/avatar")]
         public async Task<IActionResult> GetAvatar(Guid id, int? size = null)
         {
             var user = await _userManager.GetUserAsync(User);
             var artist = await Get(id);
-            string urlName = WebUtility.UrlEncode(artist.Name);
-            switch (artist.SourceSite) {
-                case SourceSite.Tumblr:
-                    int newSize = new int[] { 16, 24, 30, 40, 48, 64, 96, 128, 512 }
-                        .Where(s => s >= size)
-                        .DefaultIfEmpty(512)
-                        .First();
-                    return Redirect($"https://api.tumblr.com/v2/blog/{urlName}/avatar/{newSize}");
-                case SourceSite.Twitter:
-                    return Redirect(await _twitterService.GetAvatarUrlAsync(await _userManager.GetTwitterCredentialsAsync(_twitterService, user), artist.Name));
-                case SourceSite.DeviantArt:
-                    return Redirect($"https://a.deviantart.net/avatars/{urlName[0]}/{urlName[1]}/{urlName}.png");
-                case SourceSite.Weasyl:
-                    return Redirect(await _weasylService.GetAvatarUrlAsync(user.WeasylApiKey, artist.Name));
-                case SourceSite.FurAffinity:
-                    return Redirect(await _furAffinityService.GetAvatarUrlAsync(artist.Name));
-                default:
-                    return NotFound();
-            }
+            string url = await _memoryCache.GetOrCreateAsync($"{artist.Id}/{size}", async e =>
+            {
+                e.AbsoluteExpiration = DateTimeOffset.UtcNow.AddMinutes(15);
+
+                string urlName = WebUtility.UrlEncode(artist.Name);
+                switch (artist.SourceSite)
+                {
+                    case SourceSite.Tumblr:
+                        int newSize = new int[] { 16, 24, 30, 40, 48, 64, 96, 128, 512 }
+                            .Where(s => s >= size)
+                            .DefaultIfEmpty(512)
+                            .First();
+                        return $"https://api.tumblr.com/v2/blog/{urlName}/avatar/{newSize}";
+                    case SourceSite.Twitter:
+                        return await _twitterService.GetAvatarUrlAsync(await _userManager.GetTwitterCredentialsAsync(_twitterService, user), artist.Name);
+                    case SourceSite.DeviantArt:
+                        return $"https://a.deviantart.net/avatars/{urlName[0]}/{urlName[1]}/{urlName}.png";
+                    case SourceSite.Weasyl:
+                        return await _weasylService.GetAvatarUrlAsync(user.WeasylApiKey, artist.Name);
+                    case SourceSite.FurAffinity:
+                        return await _furAffinityService.GetAvatarUrlAsync(artist.Name);
+                    default:
+                        return null;
+                }
+            });
+            if (url != null)
+                return Redirect(url);
+            else
+                return NotFound();
         }
     }
 }

@@ -12,10 +12,7 @@ namespace FollowSort.Models.ManageViewModels
     {
         [Display(Name = "Weasyl API key")]
         public string WeasylApiKey { get; set; }
-
-        [Display(Name = "Furry Network bearer token")]
-        public string FurryNetworkBearerToken { get; set; }
-
+        
         public string StatusMessage { get; set; }
     }
 }

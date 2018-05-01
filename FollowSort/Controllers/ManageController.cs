@@ -309,7 +309,6 @@ namespace FollowSort.Controllers
             return View(new AdditionalSourcesViewModel
             {
                 WeasylApiKey = user.WeasylApiKey,
-                FurryNetworkBearerToken = user.FurryNetworkBearerToken,
             });
         }
 
@@ -323,7 +322,6 @@ namespace FollowSort.Controllers
             }
 
             user.WeasylApiKey = model.WeasylApiKey;
-            user.FurryNetworkBearerToken = model.FurryNetworkBearerToken;
             await _userManager.UpdateAsync(user);
             return View(model);
         }

@@ -80,11 +80,19 @@ namespace FollowSort.Services
             public string Title { get; set; }
             public string Thumbnail { get; set; }
             public string Link { get; set; }
-            public DateTimeOffset Posted_at;
-            public string Rating;
-            public IEnumerable<string> Keywords;
+            public DateTimeOffset Posted_at { get; set; }
+            public string Rating { get; set; }
+            public IEnumerable<string> Keywords { get; set; }
 
             public string Id => Link.Split('/').Where(s => s != "").Last();
+        }
+
+        private class FAJournal
+        {
+            public string Id { get; set; }
+            public string Title { get; set; }
+            public string Link { get; set; }
+            public DateTimeOffset Posted_at { get; set; }
         }
 
         private static async Task<IList<IFASubmission>> GetSubmissionsAsync(Artist a)
@@ -127,6 +135,31 @@ namespace FollowSort.Services
             return list;
         }
 
+        private static async Task<IList<FAJournal>> GetJournalsAsync(Artist a)
+        {
+            var list = new List<FAJournal>();
+
+            bool newUser = a.LastCheckedSourceSiteId == null;
+            long prevId = long.TryParse(a.LastCheckedSourceSiteId, out long tmp1) ? tmp1 : 0;
+            for (int i = 1; i <= (newUser ? 1 : 3); i++)
+            {
+                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/journals.json?full=1&page={i}");
+                using (var resp1 = await req1.GetResponseAsync())
+                using (var sr1 = new StreamReader(resp1.GetResponseStream()))
+                {
+                    var array = JsonConvert.DeserializeObject<IEnumerable<FAJournal>>(await sr1.ReadToEndAsync());
+                    foreach (var o in array)
+                    {
+                        if (o.Posted_at <= a.LastChecked) return list;
+
+                        list.Add(o);
+                    }
+                }
+            }
+
+            return list;
+        }
+
         private static IEnumerable<Notification> FilterSubmissions(Artist a, IEnumerable<IFASubmission> submissions)
         {
             var now = DateTime.UtcNow;
@@ -143,7 +176,7 @@ namespace FollowSort.Services
                 {
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
-                    SourceSiteId = s.Id.ToString(),
+                    SourceSiteId = s.Id,
                     ArtistName = a.Name,
                     Url = s.Link,
                     TextPost = false,
@@ -162,6 +195,25 @@ namespace FollowSort.Services
             foreach (var n in FilterSubmissions(a, submissions))
             {
                 context.Notifications.Add(n);
+            }
+
+            if (a.IncludeNonPhotos)
+            {
+                var journals = await GetJournalsAsync(a);
+                foreach (var j in journals)
+                {
+                    context.Add(new Notification
+                    {
+                        UserId = a.UserId,
+                        SourceSite = a.SourceSite,
+                        SourceSiteId = j.Id,
+                        ArtistName = a.Name,
+                        Url = j.Link,
+                        TextPost = true,
+                        Name = j.Title,
+                        PostDate = j.Posted_at
+                    });
+                }
             }
 
             a.LastChecked = DateTimeOffset.UtcNow;

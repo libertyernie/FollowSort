@@ -85,7 +85,7 @@ namespace FollowSort.Services
                 string folder = a.SourceSite == SourceSite.FurAffinity_Favorites
                     ? "favorites"
                     : "gallery";
-                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/{folder}.json?full=1&page={i}");
+                var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/{folder}.json?full=1&page={i}&sfw={(a.Nsfw?0:1)}");
                 using (var resp1 = await req1.GetResponseAsync())
                 using (var sr1 = new StreamReader(resp1.GetResponseStream()))
                 {
@@ -112,7 +112,7 @@ namespace FollowSort.Services
                 bool newUser = a.LastCheckedSourceSiteId == null;
                 for (int i = 1; i <= (newUser ? 1 : 3); i++)
                 {
-                    var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/journals.json?full=1&page={i}");
+                    var req1 = WebRequest.CreateHttp($"https://faexport.boothale.net/user/{WebUtility.UrlEncode(a.Name)}/journals.json?full=1&page={i}&sfw={(a.Nsfw?0:1)}");
                     using (var resp1 = await req1.GetResponseAsync())
                     using (var sr1 = new StreamReader(resp1.GetResponseStream()))
                     {

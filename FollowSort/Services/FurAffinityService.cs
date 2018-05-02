@@ -144,7 +144,6 @@ namespace FollowSort.Services
                     SourceSite = a.SourceSite,
                     SourceSiteId = s.Id,
                     Repost = true,
-                    ArtistName = a.Name,
                     RepostedByArtistName = a.Name,
                     Url = s.Link,
                     TextPost = false,

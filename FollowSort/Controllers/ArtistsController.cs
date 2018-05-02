@@ -72,12 +72,7 @@ namespace FollowSort.Controllers
                 {
                     case SourceSite.FurAffinity:
                     case SourceSite.FurAffinity_Favorites:
-                        if (!artist.Nsfw)
-                        {
-                            ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
-                            return View(artist);
-                        }
-                        else if (artist.TagFilter.Any())
+                        if (artist.TagFilter.Any())
                         {
                             ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
                             return View(artist);
@@ -137,12 +132,7 @@ namespace FollowSort.Controllers
             {
                 case SourceSite.FurAffinity:
                 case SourceSite.FurAffinity_Favorites:
-                    if (!artist.Nsfw)
-                    {
-                        ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by content level (SFW/NSFW) is not currently supported.");
-                        return View(artist);
-                    }
-                    else if (artist.TagFilter.Any())
+                    if (artist.TagFilter.Any())
                     {
                         ModelState.AddModelError(string.Empty, "Filtering FurAffinity submissions by tag is not currently supported.");
                         return View(artist);

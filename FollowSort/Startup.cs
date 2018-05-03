@@ -42,8 +42,6 @@ namespace FollowSort
             }).AddDeviantArt(o => {
                 o.ClientId = Configuration["Authentication:DeviantArt:ClientId"];
                 o.ClientSecret = Configuration["Authentication:DeviantArt:ClientSecret"];
-                o.SaveTokens = true;
-                o.Scope.Add("browse");
             }).AddTumblr(o => {
                 o.ConsumerKey = Configuration["Authentication:Tumblr:ConsumerKey"];
                 o.ConsumerSecret = Configuration["Authentication:Tumblr:ConsumerSecret"];

@@ -42,12 +42,10 @@
             }
             <hr />
             <p>
-                &#9888;
-                If you've already been using FollowSort with your account on
-                one of these sites and you just want to add your account on
-                another site, log in with your existing account first and add
-                the new one as an external login. See the
-                <a asp-controller="Home" asp-action="About">About page</a>
+                If you've already been using FollowSort and you just want to
+                add your Tumblr or Twitter account, log in with your existing
+                account first and add the new one as an external login. See
+                the <a asp-controller="Home" asp-action="About">About page</a>
                 for more information.
             </p>
         </section>
@@ -56,6 +54,12 @@
         <section>
             <form asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
                 <h4>Use a local account to log in.</h4>
+                <p>
+                    &#9888;
+                    Creating a new account without using Twitter, Tumblr, or
+                    DeviantArt is not currently supported. You should use
+                    one of those sites to log in.
+                </p>
                 <hr />
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <div class="form-group">

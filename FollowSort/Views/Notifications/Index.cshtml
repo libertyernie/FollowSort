@@ -34,6 +34,16 @@
 <div id="notifications">
     <h2>Notifications (@Model.Count)</h2>
 
+    @if (!Model.Any()) {
+        <p>
+            You don't have any notifications.
+        </p>
+
+        <p>
+            FollowSort does not load new posts automatically. Click the "refresh notifications" button below to check for new posts.
+        </p>
+    }
+
     <form action="/Notifications/Refresh" method="post">
         <button id="refreshButton" type="submit" class="btn btn-primary">Refresh notifications</button>
     </form>
@@ -143,13 +153,15 @@
             </div>
         }
 
-        <div style="text-align: right">
-            <label class="select-all">
-                <input type="checkbox" />
-                Select all notifications
-            </label>
-            <br />
-            <button type="submit" class="btn btn-danger">Remove selected</button>
-        </div>
+        @if (Model.Any()) {
+            <div style="text-align: right">
+                <label class="select-all">
+                    <input type="checkbox" />
+                    Select all notifications
+                </label>
+                <br />
+                <button type="submit" class="btn btn-danger">Remove selected</button>
+            </div>
+        }
     </form>
 </div>

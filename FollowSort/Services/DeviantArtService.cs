@@ -143,10 +143,8 @@ namespace FollowSort.Services
                 foreach (var d in resp.Result.Results)
                 {
                     DateTimeOffset timestamp = d.PublishedTime ?? DateTimeOffset.Now;
-                    if (timestamp <= a.LastChecked)
-                    {
-                        return posts;
-                    }
+                    if (timestamp <= a.LastChecked) return posts;
+                    if (timestamp <= DateTime.UtcNow.AddDays(-28)) return posts;
                     posts.Add(d);
                 }
             }

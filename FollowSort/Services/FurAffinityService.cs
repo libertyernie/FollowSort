@@ -120,6 +120,7 @@ namespace FollowSort.Services
                         foreach (var o in array)
                         {
                             if (o.Posted_at <= a.LastChecked) return list;
+                            if (o.Posted_at <= DateTime.UtcNow.AddDays(-28)) return list;
 
                             list.Add(o);
                         }
@@ -134,6 +135,8 @@ namespace FollowSort.Services
             Artist a,
             bool save = false)
         {
+            bool fav = a.SourceSite == SourceSite.FurAffinity_Favorites;
+
             var now = DateTime.UtcNow;
             var submissions = await GetSubmissionsAsync(a);
             foreach (var s in submissions)
@@ -143,8 +146,9 @@ namespace FollowSort.Services
                     UserId = a.UserId,
                     SourceSite = a.SourceSite,
                     SourceSiteId = s.Id,
-                    Repost = true,
-                    RepostedByArtistName = a.Name,
+                    ArtistName = fav ? null : a.Name,
+                    Repost = fav,
+                    RepostedByArtistName = fav ? a.Name : null,
                     Url = s.Link,
                     TextPost = false,
                     ThumbnailUrl = s.Thumbnail,

@@ -62,9 +62,15 @@
                 <br />
                 @foreach (var n in Model.Where(n => !n.TextPost && !n.Repost)) {
                     <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
-                        <input type="checkbox" class="individual" name="chk@(n.Id)" style="flex: 0 0 32px" />
+                        <div style="flex: 0 0 32px; display: flex; flex-direction: row;">
+                            <input type="checkbox" class="individual" name="chk@(n.Id)" />
+                            @if (n.ImageUrl != null) {
+                                <div style="flex: 0 0 10px"></div>
+                                <a target="_blank" href="@n.ImageUrl">Image</a>
+                            }
+                        </div>
                         <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
-                            <div style="flex: 1 1 auto; background: url('@n.ThumbnailUrl') no-repeat center; background-size: contain"></div>
+                            <div style="flex: 1 1 auto; background: url('@n.ImageUrl') no-repeat center; background-size: contain"></div>
                             <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
                                 @n.Name
                             </div>
@@ -88,14 +94,20 @@
                 <br />
                 @foreach (var n in Model.Where(n => !n.TextPost && n.Repost)) {
                     <div style="position: relative; width: 200px; height: 200px; display: inline-flex; flex-direction: column; text-align: center">
-                        <input type="checkbox" class="individual" name="chk@(n.Id)" style="flex: 0 0 32px" />
+                        <div style="flex: 0 0 32px; display: flex; flex-direction: row;">
+                            <input type="checkbox" class="individual" name="chk@(n.Id)" />
+                            @if (n.ImageUrl != null) {
+                                <div style="flex: 0 0 10px"></div>
+                                <a target="_blank" href="@n.ImageUrl">Image</a>
+                            }
+                        </div>
                         <a href="@n.Url" style="flex: 1 1 auto; display: flex; flex-direction: column">
                             @if (n.RepostedByArtistName != null) {
                                 <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
                                     Reposted by @n.RepostedByArtistName
                                 </div>
                             }
-                            <div style="flex: 1 1 auto; background: url(@n.ThumbnailUrl) no-repeat center; background-size: contain"></div>
+                            <div style="flex: 1 1 auto; background: url(@n.ImageUrl) no-repeat center; background-size: contain"></div>
                             <div style="flex: 0 0 auto; white-space: nowrap; overflow-x: hidden; text-overflow: ellipsis">
                                 @n.Name
                             </div>

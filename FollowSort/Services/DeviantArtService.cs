@@ -183,7 +183,7 @@ namespace FollowSort.Services
                     Url = p.Url.OriginalString,
                     TextPost = !p.Thumbs.Any(),
                     Repost = false,
-                    ThumbnailUrl = thumbnail,
+                    ImageUrl = thumbnail,
                     Name = p.Title,
                     PostDate = p.PublishedTime ?? DateTime.UtcNow
                 });
@@ -208,7 +208,7 @@ namespace FollowSort.Services
                     Url = p.Url.OriginalString,
                     TextPost = true,
                     Repost = false,
-                    ThumbnailUrl = null,
+                    ImageUrl = null,
                     Name = p.Title,
                     PostDate = p.PublishedTime ?? DateTime.UtcNow
                 });

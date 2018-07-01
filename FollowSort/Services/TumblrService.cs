@@ -157,7 +157,7 @@ namespace FollowSort.Services
                                 Url = p.Url,
                                 TextPost = false,
                                 Repost = repost,
-                                ThumbnailUrl = photo.OriginalSize.ImageUrl,
+                                ImageUrl = photo.OriginalSize.ImageUrl,
                                 Name = photo.Caption?.NullIfEmpty() ?? pp.Caption?.NullIfEmpty() ?? title,
                                 PostDate = p.Timestamp
                             });
@@ -175,7 +175,7 @@ namespace FollowSort.Services
                             Url = p.Url,
                             TextPost = true,
                             Repost = repost,
-                            ThumbnailUrl = null,
+                            ImageUrl = null,
                             Name = title,
                             PostDate = p.Timestamp
                         });

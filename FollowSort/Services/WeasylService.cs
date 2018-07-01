@@ -110,7 +110,7 @@ namespace FollowSort.Services
                     ArtistName = s.owner,
                     Url = $"https://www.weasyl.com/~{WebUtility.UrlEncode(s.owner)}/submissions/{s.submitid}",
                     TextPost = false,
-                    ThumbnailUrl = thumbnailUrl,
+                    ImageUrl = thumbnailUrl,
                     Name = s.title,
                     PostDate = s.posted_at
                 });

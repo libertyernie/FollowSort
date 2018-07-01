@@ -151,7 +151,7 @@ namespace FollowSort.Services
                     RepostedByArtistName = fav ? a.Name : null,
                     Url = s.Link,
                     TextPost = false,
-                    ThumbnailUrl = s.Thumbnail,
+                    ImageUrl = s.Thumbnail,
                     Name = s.Title,
                     PostDate = now
                 });

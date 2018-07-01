@@ -123,7 +123,7 @@ namespace FollowSort.Services
                             Url = t.Url,
                             TextPost = false,
                             Repost = t.IsRetweet,
-                            ThumbnailUrl = p.MediaURLHttps,
+                            ImageUrl = p.MediaURLHttps,
                             Name = t.RetweetedTweet?.Text ?? t.Text,
                             PostDate = t.CreatedAt
                         });
@@ -141,7 +141,7 @@ namespace FollowSort.Services
                         Url = t.Url,
                         TextPost = true,
                         Repost = t.IsRetweet,
-                        ThumbnailUrl = null,
+                        ImageUrl = null,
                         Name = t.RetweetedTweet?.Text ?? t.Text,
                         PostDate = t.CreatedAt
                     });

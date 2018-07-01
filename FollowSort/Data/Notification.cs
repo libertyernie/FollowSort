@@ -29,7 +29,7 @@ namespace FollowSort.Data
 
         public bool Repost { get; set; }
 
-        public string ThumbnailUrl { get; set; }
+        public string ImageUrl { get; set; }
 
         public string Name { get; set; }
 
